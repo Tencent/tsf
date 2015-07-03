@@ -1,23 +1,22 @@
 Tencent Server Framework
 =======================
 
-## overview
+## Overview
 
-Tencent Server Framework 是由腾讯开发的一套基于协程机制和swoole扩展的server框架。可以用于快速搭建后台服务
+Tencent Server Framework is a coroutine and Swoole based server framework for fast server deployment which developed by Tencent engineers.
 
-## features
 
-- 基于PHP，相比c/c++,大大提升搭建服务的效率和速度
-- 基于swoole扩展，可以有异步IO，定时器，共享内存等丰富的基础能力
-- 支持协程，通过协程调度机制，可以同步开发代码，而server的伺服能力不逊于纯异步的server
-- 支持server监控，包括server的自拉起等能力，提供接口来扩展监控能力
+## Features
 
-## requirements
+- PHP Based. Compared with C++, this framework is more efficient in developing and programing.
+- based on Swoole extension. powerful async IO, timers and other infrastructure capacity can be used in this framework
+- support PHP coroutine. Synchronous programing is possible using the coroutine schedule system, and can lead to the similar server capability with that of server deveoped in an asynchronous way.
+- support server monitor and provide interface to add more rules 
 
-- php5及以上版本（建议php5.5.25版本）
-- swoole扩展（建议1.7.18版本）
+##Requirements
+
+- php5+ 
+- Swoole1.7.18+
 - linux,OS X
 
-## install
-
-## demo 
+## Installation
