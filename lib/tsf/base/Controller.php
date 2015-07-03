@@ -3,7 +3,7 @@
  * @Author: winterswang
  * @Date:   2014-11-27 14:58:28
  * @Last Modified by:   winterswang
- * @Last Modified time: 2015-04-27 10:34:47
+ * @Last Modified time: 2015-07-03 18:01:05
  *
  * @introduction：提供swoole底层的所有能力，提供给http，tcp，udp继承调用
  */
@@ -27,10 +27,6 @@ class Controller
 		$this ->argv = $argv;
 		$this ->fd = $fd;
 		$this ->from_fd = $from_fd;
-
-		//TODO 应对不同协议的controller，参数更加贴近apache版本的
-		//执行yield函数
-    //    yield  $this ->init();
 	}
 
 
