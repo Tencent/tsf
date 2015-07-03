@@ -13,9 +13,9 @@
 define('STARTBASEPATH', dirname(dirname(__FILE__)));
 define('SuperProcessName','Swoole-Controller');
 //php swoole.php testserver start
-
-$cmd = $argv[1];   //cmd name
-$name = $argv[2];
+echo "STARTBASEPATH " . STARTBASEPATH . "\n";
+$name = $argv[1];
+$cmd = $argv[2];   //cmd name
 $RunningServer=array();
 //需要cmd 和 name  name 支持 all 和 具体的serverName
 if ( !$cmd || (!$name && ($cmd!='status' && $cmd!='shutdown') ))
@@ -50,7 +50,7 @@ if(($cmd!='status' && $cmd!='shutdown')){
 if(CheckProcessExist() ){ //如果存在 说明已经运行了 则通过unixsock通信
 
 
-    echo PHP_EOL.__LINE__."cmd  ".$cmd.' server '.$name.PHP_EOL;
+    echo PHP_EOL.__LINE__.' server '.$name. "cmd  ".$cmd .PHP_EOL;
 
     //如果要自杀 先杀掉所有的 然后再自杀吧
     if($cmd=='shutdown'){

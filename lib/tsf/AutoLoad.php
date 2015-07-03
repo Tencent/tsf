@@ -4,7 +4,7 @@
  * test for auto_load
  */
 
-class TestAutoLoad {
+class AutoLoad {
 
 	private static $root_path = array();
 	/**
@@ -95,5 +95,5 @@ class TestAutoLoad {
 		return $path;
 	}
 }
-spl_autoload_register(array('TestAutoLoad','auto_load'));
+spl_autoload_register(array('AutoLoad','auto_load'));
 ?>
