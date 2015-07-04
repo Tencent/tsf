@@ -67,14 +67,32 @@ php swoole testHttpServ start
 
 ```php
 
-  $ip = '127.0.0.1';
-  $port = '9905';
-  $data = 'test';
-  $timeout = 0.5; //second
-  $url='http://www.qq.com';
-  yield new Swoole\Client\TCP($ip, $port, $data, $timeout);
-  yield new Swoole\Client\UDP($ip, $port, $data, $timeout);
-  yield new Swoole\Client\HTTP($url);
+  $tcpReturn=(yield $this->tcptest());
+  
+  $udpReturn=(yield $this->udptest());
+
+  $httpReturn=(yield $this->httptest());
+
+  public function tcptest(){
+    $ip = '127.0.0.1';
+    $port = '9905';
+    $data = 'test';
+    $timeout = 0.5; //second
+    yield new Swoole\Client\TCP($ip, $port, $data, $timeout);
+  }
+  public function udptest(){
+    $ip = '127.0.0.1';
+    $port = '9905';
+    $data = 'test';
+    $timeout = 0.5; //second
+    yield new Swoole\Client\UDP($ip, $port, $data, $timeout);
+  }
+  public function httptest(){
+    $url='http://www.qq.com';
+    yield new Swoole\Client\HTTP($url);
+  }
+
+
 
 ```
 
@@ -84,14 +102,19 @@ php swoole testHttpServ start
 
 ```php
   
-  $calls=new Swoole\Client\Multi();
-  $firstReq=new Swoole\Client\TCP($ip, $port, $data, $timeout);
-  $secondReq=new Swoole\Client\UDP($ip, $port, $data, $timeout);
-  $thirdReq=new Swoole\Client\Http($url);
-  $calls ->request($firstReq,'first');             //first request
-  $calls ->request($secondReq,'second');             //second request
-  $calls ->request($thirdReq,'third');             //third request
-  $res = (yield $calls);
+  $res = (yield $this->muticallTest());
+  
+  public function muticallTest{
+    $calls=new Swoole\Client\Multi();
+    $firstReq=new Swoole\Client\TCP($ip, $port, $data, $timeout);
+    $secondReq=new Swoole\Client\UDP($ip, $port, $data, $timeout);
+    $thirdReq=new Swoole\Client\Http($url);
+    $calls ->request($firstReq,'first');             //first request
+    $calls ->request($secondReq,'second');             //second request
+    $calls ->request($thirdReq,'third');             //third request
+    yield calls;
+  }
+
   var_dump($res)
   
 ```
