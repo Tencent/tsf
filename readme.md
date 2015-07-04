@@ -56,7 +56,7 @@ log_file = '/data/log/test.log'
 ```
 #### How to start you server
 ```php
-cd /tsf/bin/
+cd /root/tsf/bin/
 php swoole testHttpServ start
 
 ```
@@ -66,14 +66,15 @@ php swoole testHttpServ start
 -we support different network protocols: TCP,UDP,HTTP
 
 ```php
-	$ip = '127.0.0.1';
-	$port = '9905';
-	$data = 'test';
-	$timeout = 0.5; //second
-	$url='http://www.qq.com';
-	yield new Swoole\Client\TCP($ip, $port, $data, $timeout);
-	yield new Swoole\Client\UDP($ip, $port, $data, $timeout);
-	yield new Swoole\Client\HTTP($url);
+
+  $ip = '127.0.0.1';
+  $port = '9905';
+  $data = 'test';
+  $timeout = 0.5; //second
+  $url='http://www.qq.com';
+  yield new Swoole\Client\TCP($ip, $port, $data, $timeout);
+  yield new Swoole\Client\UDP($ip, $port, $data, $timeout);
+  yield new Swoole\Client\HTTP($url);
 
 ```
 
@@ -90,9 +91,9 @@ php swoole testHttpServ start
   $calls ->request($firstReq,'first');             //first request
   $calls ->request($secondReq,'second');             //second request
   $calls ->request($thirdReq,'third');             //third request
-
   $res = (yield $calls);
   var_dump($res)
+  
 ```
 
 
