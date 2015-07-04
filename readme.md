@@ -1,12 +1,12 @@
 Tencent Server Framework
 =======================
 
-## overview
+## Overview
 
 Tencent Server Framework is a coroutine and Swoole based server framework for fast server deployment which developed by Tencent engineers.
 
 
-## features
+## Features
 
 - PHP Based. Compared with C++, the framework is more efficient in developing and programing.
 - based on Swoole extension. powerful async IO, timers and other infrastructure capacity can be used in this framework.
