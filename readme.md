@@ -40,7 +40,6 @@ root = '/data/web_deployment/serv/test/index.php'
 ;php start path
 php = '/usr/local/php/bin/php'
 
-;
 [setting]
 ; worker process num
 worker_num = 16
