@@ -108,7 +108,7 @@ php swoole testHttpServ start
 #### How to use Muticall
 
 - Beside that,we also support Muticall:
-- you can use Muticall to send TCP,UDP,HTTP packets at the sametime
+- you can use Muticall to send TCP,UDP packets at the sametime
 - when all the requests come back,return to interrupt
 
 ```php
@@ -119,10 +119,8 @@ php swoole testHttpServ start
     $calls=new Swoole\Client\Multi();
     $firstReq=new Swoole\Client\TCP($ip, $port, $data, $timeout);
     $secondReq=new Swoole\Client\UDP($ip, $port, $data, $timeout);
-    $thirdReq=new Swoole\Client\Http($url);
     $calls ->request($firstReq,'first');             //first request
     $calls ->request($secondReq,'second');             //second request
-    $calls ->request($thirdReq,'third');             //third request
     yield calls;
   }
 
