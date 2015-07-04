@@ -62,10 +62,10 @@ cd /root/tsf/bin/
 php swoole testHttpServ start
 
 ```
--Support Cmds: start,stop,reload,restart,status,shutdown
+- Support Cmds: start,stop,reload,restart,status,shutdown
 
 #### How to use TCP/UDP/HTTP Client
--we support different network protocols: TCP,UDP,HTTP
+- we support different network protocols: TCP,UDP,HTTP
 
 ```php
 
@@ -107,9 +107,9 @@ php swoole testHttpServ start
 
 #### How to use Muticall
 
--Beside that,we also support Muticall:
--you can use Muticall to send TCP,UDP,HTTP packets at the sametime
--when all the requests come back,return to interrupt
+- Beside that,we also support Muticall:
+- you can use Muticall to send TCP,UDP,HTTP packets at the sametime
+- when all the requests come back,return to interrupt
 
 ```php
   
