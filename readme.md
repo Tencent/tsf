@@ -93,7 +93,12 @@ php swoole testHttpServ start
   
   public function httpTest(){
     $url='http://www.qq.com';
-    yield new Swoole\Client\HTTP($url);
+    $httpRequest= new Swoole\Client\HTTP($url);
+    $data='testdata';
+    $header = array(
+      'Content-Length' => 12345,
+    );
+    yield $httpRequest->get($url); //yield $httpRequest->post($path, $data, $header);
   }
 
 
@@ -102,7 +107,8 @@ php swoole testHttpServ start
 
 #### How to use Muticall
 -Beside that,we also support Muticall:
--you can use Muticall to send TCP,UDP,HTTP packets at the sametime,when all the requests come back，return to interrupt
+-you can use Muticall to send TCP,UDP,HTTP packets at the sametime
+-when all the requests come back,return to interrupt
 
 ```php
   
