@@ -27,6 +27,16 @@ Tencent Server Framework is a coroutine and Swoole based server framework for fa
 ## Introduction
 
 
+## Contribution
+
+Your contribution to TSF development is very welcome!
+
+You may contribute in the following ways:
+
+* [Repost issues and feedback](https://github.com/tencent-php/tsf/issues)
+* Submit fixes, features via Pull Request
+* Write/polish documentation
 
 
-
+## License
+Apache License Version 2.0 see http://www.apache.org/licenses/LICENSE-2.0.html
