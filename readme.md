@@ -28,7 +28,7 @@ Tencent Server Framework is a coroutine and Swoole based server framework for fa
 
 - Tencent Server Framework can help you to start your server quickly,you just need to set a few settings
 
-- ### Server config
+### Server config
 ```php
 [server]
 ;server type:tcp，udp，http
@@ -54,16 +54,15 @@ daemonize = 1
 log_file = '/data/log/test.log'
 
 ```
-- ### How to start you server
+### How to start you server
 ```php
 cd /tsf/bin/
 php swoole testHttpServ start
 
 ```
-Support Cmds: start,stop,reload,restart,status,shutdown
+- Support Cmds: start,stop,reload,restart,status,shutdown
 
-
-- ### How to use TCP/UDP/HTTP Client
+### How to use TCP/UDP/HTTP Client
 - we support different network protocols: TCP,UDP,HTTP
 
 ```php
@@ -78,9 +77,9 @@ Support Cmds: start,stop,reload,restart,status,shutdown
 
 ```
 
-- ### How to use Muticall
+### How to use Muticall
 -  Beside that,we also support Muticall:
--   you can use Muticall to send TCP,UDP,HTTP packets at the sametime,when all the requests come back，return to interrupt
+-  you can use Muticall to send TCP,UDP,HTTP packets at the sametime,when all the requests come back，return to interrupt
 
 ```php
   
@@ -95,11 +94,6 @@ Support Cmds: start,stop,reload,restart,status,shutdown
   $res = (yield $calls);
   var_dump($res)
 ```
-
-
-
-
-### Server config
 
 
 
