@@ -27,39 +27,79 @@ Tencent Server Framework is a coroutine and Swoole based server framework for fa
 ## Introduction
 
 - Tencent Server Framework can help you to start your server quickly,you just need to set a few settings
+
+- ### Server config
 ```php
 [server]
-//所有的server信息
-;服务类型 
+;server type:tcp，udp，http
 type = http
-; 监听端口
+; port
 listen[] = 12312
-; 入口文件
+; entrance file
 root = '/data/web_deployment/serv/test/index.php'
-;用来支持多php版本
+;php start path
 php = '/usr/local/php/bin/php'
 
+;
 [setting]
-; worker进程数
+; worker process num
 worker_num = 16
-; task进程数
+; task process num
 task_worker_num = 0
-; 转发模式
+; dispatch mode
 dispatch_mode = 2
-; 守护进程
+; daemonize
 daemonize = 1
-; 系统日志
+; system log
 log_file = '/data/log/test.log'
 
 ```
-- 
-- 
-- includes components for different network protocols: TCP,UDP,HTTP
-- Beside that,we also support Muticall:
-- you can use Muticall to send TCP,UDP,HTTP packets at the sametime,when all the requests come back，return to interrupt
+- ### How to start you server
+```php
+cd /tsf/bin/
+php swoole testHttpServ start
+
+```
+Support Cmds: start,stop,reload,restart,status,shutdown
+
+
+- ### How to use TCP/UDP/HTTP Client
+- we support different network protocols: TCP,UDP,HTTP
+
+```php
+		$ip = '127.0.0.1';
+		$port = '9905';
+		$data = 'test';
+		$timeout = 0.5; //second
+		$url='http://www.qq.com';
+		yield new Swoole\Client\TCP($ip, $port, $data, $timeout);
+		yield new Swoole\Client\UDP($ip, $port, $data, $timeout);
+		yield new Swoole\Client\HTTP($url);
+
+```
+
+- ### How to use Muticall
+-  Beside that,we also support Muticall:
+-   you can use Muticall to send TCP,UDP,HTTP packets at the sametime,when all the requests come back，return to interrupt
+
+```php
+  
+  $calls=new Swoole\Client\Multi();
+  $firstReq=new Swoole\Client\TCP($ip, $port, $data, $timeout);
+  $secondReq=new Swoole\Client\UDP($ip, $port, $data, $timeout);
+  $thirdReq=new Swoole\Client\Http($url);
+  $calls ->request($firstReq,'first');             //first request
+  $calls ->request($secondReq,'second');             //second request
+  $calls ->request($thirdReq,'third');             //third request
+
+  $res = (yield $calls);
+  var_dump($res)
+```
+
+
+
 
 ### Server config
-  
 
 
 
