@@ -67,27 +67,27 @@ php swoole testHttpServ start
 
 ```php
 
-  $tcpReturn=(yield $this->tcptest());
+  $tcpReturn=(yield $this->tcpTest());
   
-  $udpReturn=(yield $this->udptest());
+  $udpReturn=(yield $this->udpTest());
 
-  $httpReturn=(yield $this->httptest());
+  $httpReturn=(yield $this->httpTest());
 
-  public function tcptest(){
+  public function tcpTest(){
     $ip = '127.0.0.1';
     $port = '9905';
     $data = 'test';
     $timeout = 0.5; //second
     yield new Swoole\Client\TCP($ip, $port, $data, $timeout);
   }
-  public function udptest(){
+  public function udpTest(){
     $ip = '127.0.0.1';
     $port = '9905';
     $data = 'test';
     $timeout = 0.5; //second
     yield new Swoole\Client\UDP($ip, $port, $data, $timeout);
   }
-  public function httptest(){
+  public function httpTest(){
     $url='http://www.qq.com';
     yield new Swoole\Client\HTTP($url);
   }
