@@ -26,6 +26,10 @@ Tencent Server Framework is a coroutine and Swoole based server framework for fa
 
 ## Introduction
 
+Tencent Server Framework includes components for different network protocols: TCP,UDP,HTTP
+beside that,we also support Muticall:
+you can use Muticall to send TCP,UDP,HTTP packets at the sametime,when all the requests come back，return to interrupt
+
 
 ## Contribution
 
