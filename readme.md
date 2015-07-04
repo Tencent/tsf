@@ -29,7 +29,10 @@ Tencent Server Framework is a coroutine and Swoole based server framework for fa
 - Tencent Server Framework can help you to start your server quickly,you just need to set a few settings
 
 ### Server config
+
 ```php
+vim server.ini
+
 [server]
 ;server type:tcp，udp，http
 type = http
@@ -79,6 +82,7 @@ php swoole testHttpServ start
     $timeout = 0.5; //second
     yield new Swoole\Client\TCP($ip, $port, $data, $timeout);
   }
+  
   public function udpTest(){
     $ip = '127.0.0.1';
     $port = '9905';
@@ -86,6 +90,7 @@ php swoole testHttpServ start
     $timeout = 0.5; //second
     yield new Swoole\Client\UDP($ip, $port, $data, $timeout);
   }
+  
   public function httpTest(){
     $url='http://www.qq.com';
     yield new Swoole\Client\HTTP($url);
