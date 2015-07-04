@@ -115,13 +115,13 @@ php swoole testHttpServ start
   
   $res = (yield $this->muticallTest());
   
-  public function muticallTest{
+  public function muticallTest(){
     $calls=new Swoole\Client\Multi();
     $firstReq=new Swoole\Client\TCP($ip, $port, $data, $timeout);
     $secondReq=new Swoole\Client\UDP($ip, $port, $data, $timeout);
     $calls ->request($firstReq,'first');             //first request
     $calls ->request($secondReq,'second');             //second request
-    yield calls;
+    yield $calls;
   }
 
   var_dump($res)
