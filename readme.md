@@ -54,32 +54,32 @@ daemonize = 1
 log_file = '/data/log/test.log'
 
 ```
-### How to start you server
+#### How to start you server
 ```php
 cd /tsf/bin/
 php swoole testHttpServ start
 
 ```
-- Support Cmds: start,stop,reload,restart,status,shutdown
+-Support Cmds: start,stop,reload,restart,status,shutdown
 
-### How to use TCP/UDP/HTTP Client
-- we support different network protocols: TCP,UDP,HTTP
+#### How to use TCP/UDP/HTTP Client
+-we support different network protocols: TCP,UDP,HTTP
 
 ```php
-		$ip = '127.0.0.1';
-		$port = '9905';
-		$data = 'test';
-		$timeout = 0.5; //second
-		$url='http://www.qq.com';
-		yield new Swoole\Client\TCP($ip, $port, $data, $timeout);
-		yield new Swoole\Client\UDP($ip, $port, $data, $timeout);
-		yield new Swoole\Client\HTTP($url);
+	$ip = '127.0.0.1';
+	$port = '9905';
+	$data = 'test';
+	$timeout = 0.5; //second
+	$url='http://www.qq.com';
+	yield new Swoole\Client\TCP($ip, $port, $data, $timeout);
+	yield new Swoole\Client\UDP($ip, $port, $data, $timeout);
+	yield new Swoole\Client\HTTP($url);
 
 ```
 
-### How to use Muticall
--  Beside that,we also support Muticall:
--  you can use Muticall to send TCP,UDP,HTTP packets at the sametime,when all the requests come back，return to interrupt
+#### How to use Muticall
+-Beside that,we also support Muticall:
+-you can use Muticall to send TCP,UDP,HTTP packets at the sametime,when all the requests come back，return to interrupt
 
 ```php
   
