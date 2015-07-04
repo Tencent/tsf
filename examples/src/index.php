@@ -3,12 +3,12 @@
  * @Author: winterswang
  * @Date:   2015-07-03 14:41:59
  * @Last Modified by:   winterswang
- * @Last Modified time: 2015-07-03 16:14:48
+ * @Last Modified time: 2015-07-04 12:06:54
  */
 
 //所有的请求都到index  之后通过psf 来启动对应的server
 
-$tsf='/data/web_deployment/winters/tsf/lib/tsf/tsf.php'; //加载psf的内容
+$tsf=SWOOLEBASEPATH . "/../tsf/tsf.php"; //加载psf的内容
 
 //require_once dirname((dirname(__FILE__))).'/lib/psf/auto_load.php'; //加载psf autoload组
 
