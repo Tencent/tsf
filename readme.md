@@ -26,9 +26,41 @@ Tencent Server Framework is a coroutine and Swoole based server framework for fa
 
 ## Introduction
 
-- Tencent Server Framework includes components for different network protocols: TCP,UDP,HTTP
-- beside that,we also support Muticall:
+- Tencent Server Framework can help you to start your server quickly,you just need to set a few settings
+```php
+[server]
+//所有的server信息
+;服务类型 
+type = http
+; 监听端口
+listen[] = 12312
+; 入口文件
+root = '/data/web_deployment/serv/test/index.php'
+;用来支持多php版本
+php = '/usr/local/php/bin/php'
+
+[setting]
+; worker进程数
+worker_num = 16
+; task进程数
+task_worker_num = 0
+; 转发模式
+dispatch_mode = 2
+; 守护进程
+daemonize = 1
+; 系统日志
+log_file = '/data/log/test.log'
+
+```
+- 
+- 
+- includes components for different network protocols: TCP,UDP,HTTP
+- Beside that,we also support Muticall:
 - you can use Muticall to send TCP,UDP,HTTP packets at the sametime,when all the requests come back，return to interrupt
+
+### Server config
+  
+
 
 
 ## Contribution
