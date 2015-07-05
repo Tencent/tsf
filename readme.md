@@ -16,7 +16,7 @@ Tencent Server Framework is a coroutine and Swoole based server framework for fa
 
 ##Requirements
 
-- php5+ 
+- php5.5+ 
 - Swoole1.7.18+
 - linux,OS X
 
