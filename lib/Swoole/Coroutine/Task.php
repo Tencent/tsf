@@ -3,13 +3,14 @@
  * @Author: winterswang
  * @Date:   2015-06-24 14:40:09
  * @Last Modified by:   winterswang
- * @Last Modified time: 2015-07-01 16:16:28
+ * @Last Modified time: 2015-07-04 23:47:47
  */
 
 namespace Swoole\Coroutine;
 
 class Task {
 
+    protected $callbackData;
     protected $taskId;
     protected $corStack;
     protected $coroutine;
@@ -83,12 +84,21 @@ class Task {
                 }
 
                 /*
-                    中断内容为空 退出
+                    if value is null and stack is not empty pop and send continue
                  */
-                if (is_null($value) || !isset($value)) {
+                if (is_null($value) && !$this ->corStack ->isEmpty()) {
                     
-                    \SysLog::error(__METHOD__." values is null", __CLASS__);
-                    return; 
+                    \SysLog::info(__METHOD__ . " values is null stack pop and send", __CLASS__);
+                    $gen = $this ->corStack ->pop();
+                    $gen ->send($this ->callbackData);
+                    continue;
+                }
+
+                if ($value instanceof Swoole\Coroutine\RetVal) {
+                    
+                    // end yeild
+                    \SysLog::info(__METHOD__ ." yield end words == " .print_r($value, true), __CLASS__);
+                    return false;
                 }
 
                 /*
@@ -96,6 +106,8 @@ class Task {
                  */
                 if (is_subclass_of($value, 'Swoole\Client\Base')) {
 
+                    //async send push gen to stack
+                    $this ->corStack ->push($gen);
                     $value ->send(array($this, 'callback'));
                     return ;
                 }
@@ -103,6 +115,9 @@ class Task {
                 /*
                     出栈，回射数据
                  */
+                if ($this ->corStack ->isEmpty) {
+                    return ;
+                }
                 \SysLog::info(__METHOD__." corStack pop ", __CLASS__);
                 $gen = $this ->corStack ->pop();    
                 $gen ->send($value);
@@ -111,7 +126,10 @@ class Task {
                 
                 if ($this ->corStack ->isEmpty()) {
                     
-                    echo " exception === " . $e ->getMessage() . " \n";
+                    /*
+                        throw the exception 
+                    */
+                    \SysLog::error(__METHOD__ ." exception ===" . $e ->getMessage(), __CLASS__);
                     return ;
                 }
             }
@@ -133,9 +151,10 @@ class Task {
          */
 
         $gen = $this ->corStack ->pop();
-        \SysLog::info(__METHOD__ . " corStack pop ",__CLASS__);
+        $this ->callbackData = array('r' => $r, 'calltime' => $calltime, 'data' => $res);
 
-        $value = $gen ->send(array('r' => $r, 'calltime' => $calltime, 'data' => $res));
+        \SysLog::info(__METHOD__ . " corStack pop and data == ".print_r($this ->callbackData, true),__CLASS__);
+        $value = $gen ->send($data);
 
         $this ->run($gen);
 

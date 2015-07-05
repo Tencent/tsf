@@ -3,7 +3,7 @@
  * @Author: winterswang
  * @Date:   2015-07-03 17:49:43
  * @Last Modified by:   winterswang
- * @Last Modified time: 2015-07-03 19:36:08
+ * @Last Modified time: 2015-07-04 23:46:34
  */
 
 class TestController extends Controller{
@@ -15,13 +15,13 @@ class TestController extends Controller{
 		$res =(yield $this ->test());
 		SysLog::debug(__METHOD__ ." res  == ".print_r($res, true), __CLASS__);
 		$response ->end(" test response ");
+		yield Swoole\Coroutine\SysCall::end('test for syscall end');
 	}
-
-
+	
 	private function test(){
 
 		$test  = new TestModel();
-		$res = (yield $test ->testClient());
+		$res = (yield $test ->udpTest());
 		SysLog::info(__METHOD__ . " res == " .print_r($res, true), __CLASS__);
 		if ($res['r'] == 0) {
 
@@ -36,7 +36,7 @@ class TestController extends Controller{
 			yield array(
 				'r' => 1,
 				'error_msg' => 'yield failed',
-				);
+				 );
 		}
 	}
 }
