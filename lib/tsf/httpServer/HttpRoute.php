@@ -74,8 +74,11 @@ class HttpRoute extends Route {
 
 
                 //强制转为
-                $mvc['get']=array_merge($rule['default'],(array)$tmpGet); //以tmpGet去覆盖default
-
+                if(isset($tmpGet)) {     //如果设置了
+                    $mvc['get']=array_merge($rule['default'],(array)$tmpGet); //以tmpGet去覆盖default
+                }else{
+                    $mvc['get']=$rule['default'];
+                }
                 //合并默认参数------------》以后面一个为准
 //                if(empty($tmpGet)){
 //                    if(empty($rule['default'])){  //如果default也是空 那么就不管了
