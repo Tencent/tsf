@@ -56,7 +56,7 @@ daemonize = 1
 log_file = '/data/log/test.log'
 
 ```
-#### How to start you server
+#### How to start your server
 ```php
 cd /root/tsf/bin/
 php swoole testHttpServ start
