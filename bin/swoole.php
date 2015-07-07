@@ -258,7 +258,6 @@ function StartServSock($RunServer)
             $phpStart=$serv->runServer[$opData['server']]['php'];//获取php启动路径
             //首先unset 防止被自动拉起，然后停止，然后sleep 然后start
             unset($serv->runServer[$opData['server']]);//从runserver中干掉
-            //exec("$phpStart ".STARTBASEPATH . "/lib/Swoole/shell/start.php ".' stop '.$opData['server']);//
 
             StartServ($phpStart,'stop',$opData['server']);
 
