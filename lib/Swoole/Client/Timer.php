@@ -3,7 +3,7 @@
  * @Author: wangguangchao
  * @Date:   2015-07-06 19:57:07
  * @Last Modified by:   winterswang
- * @Last Modified time: 2015-07-07 15:40:03
+ * @Last Modified time: 2015-07-06 23:52:56
  */
 
 namespace Swoole\Client;
@@ -16,7 +16,7 @@ class Timer {
 	const CONNECT = 1;
 	const RECEIVE = 2;
 
-	const LOOPTIME  = 500; //设置loop循环的时间片
+	const LOOPTIME  = 0.5; //设置loop循环的时间片
 	/**
 	 * [add 添加IO事件]
 	 * @param [type] $socket   [fd]
@@ -31,7 +31,7 @@ class Timer {
 		self::init();
 
 		$event = array(
-			'timeout' => microtime(true),
+			'timeout' => microtime(true) + self::LOOPTIME,
 			'cli' => $cli,
 			'callback' => $callback,
 			'params' => $params,
@@ -57,11 +57,11 @@ class Timer {
 			遍历自己的数组，发现时间超过预定时间段，且该IO的状态依然是未回包状态，则走超时逻辑
 		 */
 		foreach (self::$event as $socket => $e) {
-
-		    $res = (microtime(true) - $e['timeout'])* 1000 - self::LOOPTIME;
-		    \SysLog::debug(__METHOD__ ." key == $socket res == ".$res, __CLASS__);
-		     
- 		    if($res >= 0){
+		
+		    $now = microtime(true);
+		    \SysLog::debug(__METHOD__ ." key == $socket  now == $now timeout == ".$e['timeout'], __CLASS__);
+ 		   
+		    if($now > $e['timeout']){
 
 			self::del($socket);
 			$cli = $e['cli'];
@@ -80,7 +80,7 @@ class Timer {
 
 		if (!isset(self::$tickKey)) {
 
-			self::$tickKey = swoole_timer_tick(self::LOOPTIME, function(){
+			self::$tickKey = swoole_timer_tick(1000 * self::LOOPTIME, function(){
 
 			    //循环数组，踢出超时情况
 			    self::loop();
