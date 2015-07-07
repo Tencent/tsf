@@ -10,7 +10,7 @@
 
 $tsf = SWOOLEBASEPATH . "/../tsf/tsf.php"; //加载psf的内容
 
-//require_once dirname((dirname(__FILE__))).'/lib/psf/auto_load.php'; //加载psf autoload组
+
 
 //TestAutoLoad::addRoot(PSFBASEPATH);
 
