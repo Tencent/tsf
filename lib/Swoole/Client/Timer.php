@@ -3,7 +3,7 @@
  * @Author: wangguangchao
  * @Date:   2015-07-06 19:57:07
  * @Last Modified by:   winterswang
- * @Last Modified time: 2015-07-06 23:52:56
+ * @Last Modified time: 2015-07-07 15:40:03
  */
 
 namespace Swoole\Client;
@@ -44,9 +44,9 @@ class Timer {
 	public static function del($key){
 
 		\SysLog::info(__METHOD__ . " del event key == $key ", __CLASS__);
-		if (isset(self::$event["$key"])) {
+		if (isset(self::$event[$key])) {
 
-			unset(self::$event["$key"]);
+			unset(self::$event[$key]);
 		}
 	}
 
