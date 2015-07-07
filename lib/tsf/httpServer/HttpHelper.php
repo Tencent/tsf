@@ -17,12 +17,6 @@ class HttpHelper {
     //请求uri错误
     const HTTP_ERROR_URI = 0x02;
 
-
-    public static function getRoute($uri,$verb=null){
-        return array('r'=>0,'controller'=>'Mark','action'=>'Marktest');
-
-    }
-
     /**
      * 处理request对象
      * @param req swoole http server 获得的request对象
@@ -38,22 +32,16 @@ class HttpHelper {
             return array('r' => self::HTTP_ERROR_URI);
         }
 
-
-        //  array_merge((array)($req -> get),(array)$appRoute['get']);
-
         return array('r' => self::HTTP_OK,
             'route' => $appRoute,
-            //如果同时有post 和 file  swoole 会自动解析为post 和rawContent还在 音视频需要原样转发
             'request' => array('uri' => $uri,
                 'header' => $req ->header,
                 'get' => array_merge((array)(isset($req -> get)?$req -> get:array()),(array)$appRoute['get']),
-                'post' => (isset($req -> post))? $req -> post : $req -> rawContent(),  //暂定这样 留待验证
+                'post' => (isset($req -> post))? $req -> post : '',
                 'files' => isset($req -> files)?$req -> files:'',
                 'cookie' => isset($req -> cookie)?$req -> cookie:'',
                 'rawcontent' => $req -> rawContent(),
                 'method' => $method,
-
-
             ),
         );
     }
