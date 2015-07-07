@@ -22,7 +22,7 @@
                  'debug'=>1,
              )
          ), //支持log不同级别
-         'router'=>array('info'=>1,'error'=>1), //支持自定义route 传递一个函数？
+         'router'=>array('info'=>1,'error'=>1), //支持自定义route 传递一个函数 ？
          'preFilter'=>array('info'=>1,'error'=>1), //fliter之前做的事情 传递一个函数？
          'postFilter'=>array('info'=>1,'error'=>1), //fliter之后做的事情 传递一个函数？
      );
