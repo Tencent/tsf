@@ -3,7 +3,7 @@
  * @Author: winterswang
  * @Date:   2015-06-24 14:40:09
  * @Last Modified by:   winterswang
- * @Last Modified time: 2015-07-04 23:47:47
+ * @Last Modified time: 2015-07-06 21:36:31
  */
 
 namespace Swoole\Coroutine;
@@ -154,7 +154,7 @@ class Task {
         $this ->callbackData = array('r' => $r, 'calltime' => $calltime, 'data' => $res);
 
         \SysLog::info(__METHOD__ . " corStack pop and data == ".print_r($this ->callbackData, true),__CLASS__);
-        $value = $gen ->send($data);
+        $value = $gen ->send($this ->callbackData);
 
         $this ->run($gen);
 
