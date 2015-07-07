@@ -3,7 +3,7 @@
  * @Author: winterswang
  * @Date:   2015-07-03 14:41:59
  * @Last Modified by:   winterswang
- * @Last Modified time: 2015-07-04 12:06:54
+ * @Last Modified time: 2015-07-06 19:29:44
  */
 
 //所有的请求都到index  之后通过psf 来启动对应的server
@@ -18,9 +18,7 @@ $config=dirname(__FILE__).'/config/UserConfig.php'; //加载用户的config 一�
 
 //业务的config
 
-
 require_once($tsf);
-
 
 //执行xxx方法----prerequest
 
