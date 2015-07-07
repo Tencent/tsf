@@ -3,7 +3,7 @@
  * @Author: wangguangchao
  * @Date:   2015-07-06 19:57:07
  * @Last Modified by:   winterswang
- * @Last Modified time: 2015-07-06 23:52:56
+ * @Last Modified time: 2015-07-07 17:59:10
  */
 
 namespace Swoole\Client;
@@ -11,7 +11,7 @@ namespace Swoole\Client;
 class Timer {
 
 	protected static $event = array();
-	protected static $tickKey;
+	protected static $isOnTimer = false;
 	
 	const CONNECT = 1;
 	const RECEIVE = 2;
@@ -63,12 +63,12 @@ class Timer {
  		   
 		    if($now > $e['timeout']){
 
-			self::del($socket);
-			$cli = $e['cli'];
-			$cli ->close();
+				self::del($socket);
+				$cli = $e['cli'];
+				$cli ->close();
 
-		        call_user_func_array($e['callback'], $e['params']);
-	            }
+			    call_user_func_array($e['callback'], $e['params']);
+	        }
 		}
 	}
 
@@ -78,17 +78,16 @@ class Timer {
 	 */
 	public static function init(){
 
-		if (!isset(self::$tickKey)) {
+		if (!self::$isOnTimer) {
 
-			self::$tickKey = swoole_timer_tick(1000 * self::LOOPTIME, function(){
+			swoole_timer_after(1000 * self::LOOPTIME, function(){
 
 			    //循环数组，踢出超时情况
 			    self::loop();
+			    self::$isOnTimer = false;
 			});
-			\SysLog::info(__METHOD__ ." init timer tick key == " . self::$tickKey, __CLASS__);
+			self::$isOnTimer = true;
 		}
-
-
 	}
 
 }
