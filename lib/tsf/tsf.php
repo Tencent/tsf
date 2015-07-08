@@ -32,8 +32,21 @@ class Tii
 
     public static function   createUdpApplication($config){
         TestAutoLoad::addRoot(dirname(dirname($config)));
+        $protocalClass = UserConfig::getConfig('protocalClass');
+        if(!class_exists($protocalClass)){
+            return false;
+        }
+        $protocal = new $protocalClass();
+        $routeClass = UserConfig::getConfig('routeClass');
+        if(!class_exists($routeClass)){
+            return false;
+        }
+        $route = new $routeClass();
         SysLog::init(UserConfig::getConfig('log'));
-        return new YaafUdpServ();
+        $udp = new TSFUdpServ();
+        $udp -> setUdp($protocal, $route);
+        return $udp;
+        //return new YaafUdpServ();
        // return $class;
         //进行路由解析等
     }
