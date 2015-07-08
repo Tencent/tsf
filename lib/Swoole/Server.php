@@ -260,10 +260,9 @@ abstract class Server implements Server\Driver
    /*
             设定一个全局的协程调度对象
          */
-        if (method_exists($this ->protocol, 'onHttpWorkInit')) {
-            $this ->protocol ->onHttpWorkInit($request, $response);
-        }
-        $this->protocol->onRequest($request, $response);
+	//$this ->log( " serve === " .print_r($this ->sw, true) . "\n");
+        $request ->scheduler = $this ->sw ->scheduler;
+	$this->protocol->onRequest($request, $response);
     }
 
     public function onReceive($server, $fd, $fromId, $data)

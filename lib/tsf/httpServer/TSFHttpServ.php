@@ -10,9 +10,10 @@ class TSFHttpServ extends Swoole\Network\Protocol\BaseServer{
 
     public function onRequest($request, $response) {
 
+	//SysLog::debug(__METHOD__ . print_r($request,true), __CLASS__);
         //统一进行路由和数据的预处理
         $req = HttpHelper::httpReqHandle($request);
-        SysLog::info(__METHOD__.print_r($req,true),__CLASS__);
+       // SysLog::info(__METHOD__.print_r($req,true),__CLASS__);
         if($req['r'] === HttpHelper::HTTP_ERROR_URI){
             $response -> status(404);
             //todo:log
@@ -20,7 +21,7 @@ class TSFHttpServ extends Swoole\Network\Protocol\BaseServer{
             return;
         };
 
-        SysLog::info(__METHOD__.'  '.__LINE__ . " REQUEST IS ".print_r($req,true),__CLASS__);
+        //SysLog::info(__METHOD__.'  '.__LINE__ . " REQUEST IS ".print_r($req,true),__CLASS__);
         $class = $req['route']['controller']. 'Controller';
         $fun= 'action'.$req['route']['action'];
         //判断类是否存在
@@ -42,10 +43,9 @@ class TSFHttpServ extends Swoole\Network\Protocol\BaseServer{
      * [onStart 协程调度器单例模式]
      * @return [type] [description]
      */
-    public function onHttpWorkInit($request, $response){
+    public function onStart($server, $workerId){
 
         $scheduler = new \Swoole\Coroutine\Scheduler();
-        $request ->scheduler = $scheduler;
+        $server ->scheduler = $scheduler;
     }
-
 }
