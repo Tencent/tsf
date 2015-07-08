@@ -135,16 +135,21 @@ php swoole testHttpServ start
 - besides that, we also support default GET parameter
 
 ```php
-  URL                                       METHOD       CONTROLLER  ACTION          parameter
+  URL                                       METHOD       CONTROLLER  ACTION
   http://127.0.0.1:80/Test?h=1              ANY     ==>  TestController/ActionIndex
+
   http://127.0.0.1:80/Test/send?h=1         ANY     ==>  TestController/ActionSend
   Restful
   http://127.0.0.1:80/rest                  GET     ==>  TestController/ActionList
-  http://127.0.0.1:80/rest/Test/22          GET     ==>  TestController/ActionView   Get['id']=22
+  http://127.0.0.1:80/rest/Test/22          GET     ==>  TestController/ActionView
+                                                         Get['id']=22
   http://127.0.0.1:80/rest/Test             POST    ==>  TestController/ActionCreate
-  http://127.0.0.1:80/rest/Test/22          PUT     ==>  TestController/ActionUpdate  Get['id']=22
-  http://127.0.0.1:80/rest/Test/22          DELETE  ==>  TestController/ActionDelete  Get['id']=22
-  http://127.0.0.1:80/rest/Test/send/1/li   GET     ==>  TestController/ActionSend    Get['cid']=1 Get['name']=li
+  http://127.0.0.1:80/rest/Test/22          PUT     ==>  TestController/ActionUpdate
+                                                         Get['id']=22
+  http://127.0.0.1:80/rest/Test/22          DELETE  ==>  TestController/ActionDelete
+                                                         Get['id']=22
+  http://127.0.0.1:80/rest/Test/send/1/li   GET     ==>  TestController/ActionSend
+                                                         Get['cid']=1 Get['name']=li
 
 
 ```
