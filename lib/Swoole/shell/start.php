@@ -49,7 +49,6 @@ if($config['server']['type']=='http'){  //
 //合并config 只读一次
 $server->config=array_merge($server->config, $config);
 
-echo __LINE__.'xxxxxx'.print_r($server->config,true).PHP_EOL;
 //通过root 来获取所有的源码
 
 //获取index一次 加载tsf框架

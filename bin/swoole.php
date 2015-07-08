@@ -63,9 +63,9 @@ if(CheckProcessExist() ){ //如果存在 说明已经运行了 则通过unixsock
                 preg_match('/\d+/', $ret, $match);//匹配出来进程号
                 $ServerId=$match['0'];
                 if(posix_kill($ServerId, 15)){//如果成功了
-                    echo ' stop '.$server['name'].' success '.PHP_EOL;
+                    echo 'stop '.$server['name']."\033[32;40m [SUCCESS] \033[0m".PHP_EOL;
                 }else{
-                    echo ' stop '.$server['name'].' failed '.PHP_EOL;
+                    echo 'stop '.$server['name']."\033[31;40m [FAIL] \033[0m".PHP_EOL;
                 }
             };
             //然后开始杀Swoole-Controller
@@ -73,9 +73,9 @@ if(CheckProcessExist() ){ //如果存在 说明已经运行了 则通过unixsock
             preg_match('/\d+/', $ret, $match);
             $ServerId=$match['0'];
             if(posix_kill($ServerId, 15)){//如果成功了
-                echo ' stop '.SuperProcessName.' success '.PHP_EOL;
+                echo 'stop '.SuperProcessName."\033[32;40m [SUCCESS] \033[0m".PHP_EOL;
             }else{
-                echo ' stop '.SuperProcessName.' failed '.PHP_EOL;
+                echo 'stop '.SuperProcessName."\033[31;40m [FAIL] \033[0m".PHP_EOL;
             }
         }else{
             echo 'cmd is '.$cmd.PHP_EOL.' and return is '.print_r($ret,true).PHP_EOL;
@@ -90,9 +90,9 @@ if(CheckProcessExist() ){ //如果存在 说明已经运行了 则通过unixsock
                 if(empty($ret['data'])){
                     echo 'cmd is '.$cmd.PHP_EOL.' and return is '.print_r($ret,true).PHP_EOL;
                 }else{
-                    echo SuperProcessName.' is running '.PHP_EOL;
+                    echo SuperProcessName.' is '."\033[32;40m [RUNNING] \033[0m".PHP_EOL;
                     foreach($ret['data'] as $single){
-                        echo 'Server Name is '.$single['name'].'    '.'and php start path is '.$single['php'].PHP_EOL;
+                        echo 'Server Name is '."\033[32;40m ".$single['name']." \033[0m".'  '.'and php start path is '.$single['php'].PHP_EOL;
                     }
                 }
 
@@ -132,11 +132,11 @@ if(CheckProcessExist() ){ //如果存在 说明已经运行了 则通过unixsock
         $pid = $process->start();
         $exeRet=swoole_process::wait();
         if($exeRet['code']){//创建失败
-            echo $phpStart.' '.$name.' '.$cmd.' error '.PHP_EOL;
+            echo $phpStart.' '.$name.' '.$cmd."\033[31;40m [FAIL] \033[0m".PHP_EOL;
             return;
         }
         //创建成功 进入daemon模式，开启unix sock
-        echo $phpStart.' '.$name.' '.$cmd.' success '.PHP_EOL;
+        echo $phpStart.' '.$name.' '.$cmd."\033[32;40m [SUCCESS] \033[0m".PHP_EOL;
         swoole_process::daemon();
         //开启unixsock 监听模式
         //$RunningServer[$name]=$name;
