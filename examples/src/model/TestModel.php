@@ -3,7 +3,7 @@
  * @Author: winterswang
  * @Date:   2015-07-03 18:10:05
  * @Last Modified by:   winterswang
- * @Last Modified time: 2015-07-04 22:15:47
+ * @Last Modified time: 2015-07-09 20:54:20
  */
 
 
@@ -58,5 +58,11 @@ class TestModel {
 	    $data = 'test';
 	    $timeout = 0.5; //second
 	    yield new Swoole\Client\TCP($ip, $port, $data, $timeout);
+	 }
+
+	 public function mysqlTest(){
+	 	$sql = new MYSQL(array('host' => '127.0.0.1', 'port' => 3345, 'user' => 'root', 'password' => 'root', 'database' => 'test', 'charset' => 'utf-8',));
+		$ret = (yield $sql ->query('show tables'));
+		var_dump($ret);
 	 }
 }
