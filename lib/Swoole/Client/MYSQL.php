@@ -3,11 +3,11 @@
  * @Author: wangguangchao
  * @Date:   2015-07-09 18:55:36
  * @Last Modified by:   winterswang
- * @Last Modified time: 2015-07-09 20:47:35
+ * @Last Modified time: 2015-07-09 20:52:03
  */
 
 namespace Swoole\Client;
-require_once "Base.php";
+//require_once "Base.php";
 
 class MYSQL extends Base{
 
