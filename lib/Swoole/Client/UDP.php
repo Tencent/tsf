@@ -2,8 +2,8 @@
 /**
  * @Author: winterswang
  * @Date:   2015-06-25 16:21:09
- * @Last Modified by:   wangguangchao
- * @Last Modified time: 2015-07-09 11:04:45
+ * @Last Modified by:   winterswang
+ * @Last Modified time: 2015-07-09 20:51:07
  */
 
 // 增加命名空间
@@ -70,7 +70,7 @@ class UDP extends Base{
             $this ->calltime = microtime(true);
             if (floatval(($this ->timeout)) >0) {
                 //临时方案
-                Timer::add($this ->key, $this ->timeout, $client, $callback, array('r' => 2 ,'key' => '', 'calltime' => $this ->calltime, 'error_msg' => 'timeout'));
+                Timer::add($this ->key, $this ->timeout, $client, $callback, array('r' => 2 ,'key' => $this ->key, 'calltime' => $this ->calltime, 'error_msg' => 'timeout'));
             /*
                 $this ->timer = swoole_timer_after(floatval($this ->timeout) * 1000, function() use($client,$callback){
                     $client ->close();
