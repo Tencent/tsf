@@ -2,8 +2,8 @@
 /**
  * @Author: winterswang
  * @Date:   2015-06-27 15:35:48
- * @Last Modified by:   winterswang
- * @Last Modified time: 2015-07-01 16:18:49
+ * @Last Modified by:   wangguangchao
+ * @Last Modified time: 2015-07-09 19:02:11
  */
 
 // 增加命名空间
@@ -205,8 +205,7 @@ class HTTP extends Base {
 
         
         \SysLog::info(__METHOD__." GET RESULT = ". print_r($this,true), __CLASS__);
-        $res = (yield $this);
-        yield $res;
+        yield $this;
     }
 
     public function post($path, $data, $headers=array()){
@@ -222,8 +221,7 @@ class HTTP extends Base {
         $this->buildRequest();
 
         \SysLog::info(__METHOD__." POST RESULT = ". print_r($this,true), __CLASS__);
-        $res = (yield $this);
-        yield $res;
+        yield $this;
     }
 
     public function send(callable $callback){

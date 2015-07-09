@@ -3,7 +3,7 @@
  * @Author: wangguangchao
  * @Date:   2015-07-06 19:57:07
  * @Last Modified by:   winterswang
- * @Last Modified time: 2015-07-07 17:59:10
+ * @Last Modified time: 2015-07-09 14:45:57
  */
 
 namespace Swoole\Client;
