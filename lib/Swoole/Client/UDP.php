@@ -3,7 +3,7 @@
  * @Author: winterswang
  * @Date:   2015-06-25 16:21:09
  * @Last Modified by:   wangguangchao
- * @Last Modified time: 2015-07-07 10:19:39
+ * @Last Modified time: 2015-07-09 11:04:45
  */
 
 // 增加命名空间
@@ -62,7 +62,7 @@ class UDP extends Base{
 
             $cli ->close();
             $this ->calltime = microtime(true) - $this ->calltime;
-            swoole_timer_clear($this ->timer); 
+            //swoole_timer_clear($this ->timer); 
             call_user_func_array($callback, array('r' => 0, 'key' => $this ->key, 'calltime' => $this ->calltime, 'data' =>$data));
         });
 
