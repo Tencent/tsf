@@ -2,8 +2,8 @@
 /**
  * @Author: winterswang
  * @Date:   2015-07-03 18:10:05
- * @Last Modified by:   winterswang
- * @Last Modified time: 2015-07-09 20:54:20
+ * @Last Modified by:   wangguangchao
+ * @Last Modified time: 2015-07-10 10:44:11
  */
 
 
@@ -63,6 +63,8 @@ class TestModel {
 	 public function mysqlTest(){
 	 	$sql = new MYSQL(array('host' => '127.0.0.1', 'port' => 3345, 'user' => 'root', 'password' => 'root', 'database' => 'test', 'charset' => 'utf-8',));
 		$ret = (yield $sql ->query('show tables'));
+		var_dump($ret);
+		$ret = (yield $sql ->query('desc test'));
 		var_dump($ret);
 	 }
 }
