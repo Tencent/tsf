@@ -2,8 +2,8 @@
 /**
  * @Author: wangguangchao
  * @Date:   2015-07-09 18:55:36
- * @Last Modified by:   winterswang
- * @Last Modified time: 2015-07-09 20:52:03
+ * @Last Modified by:   wangguangchao
+ * @Last Modified time: 2015-07-10 10:47:53
  */
 
 namespace Swoole\Client;
@@ -126,6 +126,8 @@ class MYSQL extends Base{
             $this ->calltime = $this ->calltime - microtime(true);
             
             call_user_func_array($this ->callback, array('r' => 0, 'key' => $this->key, 'calltime' => $this ->calltime, 'data' => $result ->fetch_all()));
+            //关链接
+            //$this ->db ->close();
             if (is_object($result))
             {
                 mysqli_free_result($result);
