@@ -130,7 +130,7 @@ php swoole testHttpServ start
 
 ```php
 
-    $sql = new MYSQL(array('host' => '127.0.0.1', 'port' => 3345, 'user' => 'root', 'password' => 'root', 'database' => 'test', 'charset' => 'utf-8',));
+    $sql = new Swoole\Client\MYSQL(array('host' => '127.0.0.1', 'port' => 3345, 'user' => 'root', 'password' => 'root', 'database' => 'test', 'charset' => 'utf-8',));
     $ret = (yield $sql ->query('show tables'));
     var_dump($ret);
     $ret = (yield $sql ->query('desc test'));
