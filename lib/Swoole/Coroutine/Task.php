@@ -115,7 +115,7 @@ class Task {
                 /*
                     出栈，回射数据
                  */
-                if ($this ->corStack ->isEmpty) {
+                if ($this ->corStack ->isEmpty()) {
                     return ;
                 }
                 \SysLog::info(__METHOD__." corStack pop ", __CLASS__);
