@@ -61,7 +61,7 @@ cd /root/tsf/bin/
 php swoole testHttpServ start
 
 ```
-- Support Cmds: start,stop,reload,restart,status,shutdown
+- Support Cmds: start,stop,reload,restart,status,shutdown,startall,list
 
 #### How to use TCP/UDP/HTTP Client
 - we support different network protocols: TCP,UDP,HTTP
