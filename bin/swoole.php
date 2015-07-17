@@ -14,7 +14,7 @@ define('STARTBASEPATH', dirname(dirname(__FILE__)));
 define('SuperProcessName','Swoole-Controller');
 define('uniSockPath',"/tmp/".SuperProcessName.".sock");
 
-$cmds=array('start','stop','reload','restart','shutdown','status','list');
+$cmds=array('start','stop','reload','restart','shutdown','status','list','startall');
 
 //php swoole.php testserver start
 
@@ -97,7 +97,7 @@ if(CheckProcessExist() ){ //如果存在 说明已经运行了 则通过unixsock
             //临时的status优化
             if($cmd=='status'){
                 if(empty($ret['data'])){
-                    echo 'cmd is '.$cmd.PHP_EOL.' and return is '.print_r($ret,true).PHP_EOL;
+                    echo 'No Server is Running'.PHP_EOL;
                 }else{
                     echo SuperProcessName.' is '."\033[32;40m [RUNNING] \033[0m".PHP_EOL;
                     foreach($ret['data'] as $single){
@@ -107,7 +107,7 @@ if(CheckProcessExist() ){ //如果存在 说明已经运行了 则通过unixsock
 
 
             }else{
-                echo 'cmd is '.$cmd.PHP_EOL.' and return is '.print_r($ret,true).PHP_EOL;
+                echo 'cmd is '.$cmd.PHP_EOL.' and return is '.print_r($ret['msg'],true).PHP_EOL;
 
             }
         }else{
@@ -157,32 +157,28 @@ if(CheckProcessExist() ){ //如果存在 说明已经运行了 则通过unixsock
 
     if ($cmd == 'startall')
     {
-        //先处理单个 注意异常处理的情况
-        $process = new swoole_process(function(swoole_process $worker) use($servArr,&$RunningServer){//目前指支持一个
 
-            $configDir = STARTBASEPATH . "/conf/*.ini";
-            $configArr = glob($configDir);
-            foreach($configArr as $k => $v)
-            {
-                $name=basename($v, '.ini');
-                $config = parse_ini_file(STARTBASEPATH . "/conf/".$name.".ini", true);
-                $phpStart=$config['server']['php'];
-                if(empty($phpStart)){
-                    echo " $name phpstartpath $phpStart not exist ".PHP_EOL;
-                    continue;
-                };
-                $servArr['name']=$config;
-                $worker->exec($phpStart, array( STARTBASEPATH . "/lib/Swoole/shell/start.php",'start',$name));//拉起server
+
+        $configDir = STARTBASEPATH . "/conf/*.ini";
+        $configArr = glob($configDir);
+        foreach($configArr as $k => $v)
+        {
+            $name=basename($v, '.ini');
+            $config = parse_ini_file(STARTBASEPATH . "/conf/".$name.".ini", true);
+            $phpStart=$config['server']['php'];
+            if(empty($phpStart)){
+                echo " $name phpstartpath $phpStart not exist ".PHP_EOL;
+                continue;
+            };
+            $servArr['name']=$config;
+            if(StartServ($phpStart,'start',$name)){
                 $RunningServer[$name]=array('php'=>$phpStart,'name'=>$name);
                 echo $phpStart.' '.$name." start \033[32;40m [SUCCESS] \033[0m".PHP_EOL;
-            };
-        }, false);
-        $pid = $process->start();
-        $exeRet=swoole_process::wait();
-        if($exeRet['code']){//创建失败
-            echo " startall  \033[31;40m [FAIL] \033[0m".PHP_EOL;
-            return;
-        }
+            }else{
+                echo " startall  \033[31;40m [FAIL] \033[0m".PHP_EOL;
+            }
+        };
+
         //创建成功 进入daemon模式，开启unix sock
         swoole_process::daemon();
         //开启unixsock 监听模式
@@ -243,7 +239,7 @@ function StartServSock($RunServer)
                 StartLog(__LINE__.'receive data is'.json_encode(array('r'=>1,"msg" => $opData['server'].' is already running')));
                 return;
             };
-            //如果没有，则读取配置  todo 回调中是否可以执行 getServerIni？  验证了可以
+            //如果没有，则读取配置
             $retConf=getServerIni($opData['server']);
             if($retConf['r']!=0){ //
                 $serv->send($fd, json_encode($retConf));
@@ -253,7 +249,7 @@ function StartServSock($RunServer)
                 StartServ($phpStart,'start',$opData['server']);
                 StartLog(__LINE__." $phpStart ".STARTBASEPATH . "/lib/Swoole/shell/start.php ".$opData['cmd'].' '.$opData['server']);
                 $serv->runServer[$opData['server']]=array('php'=>$phpStart,'name'=>$opData['server']); //添加到runServer中
-                $serv->send($fd, json_encode(array('r'=>0,'msg' => 'server start'." \033[32;40m [SUCCESS] \033[0m")));
+                $serv->send($fd, json_encode(array('r'=>0,'msg' => "server {$opData['server']} start"." \033[32;40m [SUCCESS] \033[0m")));
                 return;
             }
         }
@@ -265,7 +261,7 @@ function StartServSock($RunServer)
 
             StartLog(__LINE__." $phpStart ".STARTBASEPATH . "/lib/Swoole/shell/start.php ".$opData['cmd'].' '.$opData['server']);
 
-            $serv->send($fd, json_encode(array('r'=>0,'msg' => 'server stop '." \033[32;40m [SUCCESS] \033[0m")));
+            $serv->send($fd, json_encode(array('r'=>0,'msg' => "server {$opData['server']} stop "." \033[32;40m [SUCCESS] \033[0m")));
             return;
         }elseif($opData['cmd']=='status'){ //获取所有服务的状态
 
@@ -282,7 +278,7 @@ function StartServSock($RunServer)
             $phpStart=$serv->runServer[$opData['server']]['php'];//获取php启动路径
             StartLog(__LINE__."$phpStart ".STARTBASEPATH . "/lib/Swoole/shell/start.php ".$opData['cmd'].' '.$opData['server']);
             StartServ($phpStart,'reload',$opData['server']);
-            $serv->send($fd, json_encode(array('r'=>0,'msg' => 'server reload '." \033[32;40m [SUCCESS] \033[0m")));
+            $serv->send($fd, json_encode(array('r'=>0,'msg' => "server {$opData['server']}  reload "." \033[32;40m [SUCCESS] \033[0m")));
             return;
         }elseif($opData['cmd']=='restart'){ //重启所有服务
             $phpStart=$serv->runServer[$opData['server']]['php'];//获取php启动路径
@@ -359,7 +355,13 @@ function StartServ($phpStart,$cmd,$name){
     }, false);
     $pid = $process->start();
     $exeRet=swoole_process::wait();
-    return;
+    if($exeRet['code']){//创建失败
+        StartLog (" startall  \033[31;40m [FAIL] \033[0m".PHP_EOL);
+        return false;
+    }else{
+        StartLog (" startall  \033[31;40m [SUCCESS] \033[0m".PHP_EOL);
+        return true;
+    }
 }
 
 
@@ -379,9 +381,10 @@ function sendCmdToServ($data){
 function printInfo(){
     echo "welcome to use Swoole-Controller,we can help you to monitor your swoole server!".PHP_EOL;
     echo "please input server name and cmd:  php swoole.php myServerName start ".PHP_EOL;
-    echo "support cmds: start stop reload restart status ".PHP_EOL;
+    echo "support cmds: start stop reload restart status startall list".PHP_EOL;
     echo "if you want to stop Swoole-Controller please input :  php swoole.php shutdown".PHP_EOL;
-    echo "if you want to know running servername please input :  php swoole.php list".PHP_EOL;
+    echo "if you want to know running servername please input :  php swoole.php status".PHP_EOL;
     echo "if you want to know server list that you can start please input :  php swoole.php list".PHP_EOL;
+    echo "if you want to start all your servers please input :  php swoole.php startall".PHP_EOL;
     exit;
 }
