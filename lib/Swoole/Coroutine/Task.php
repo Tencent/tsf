@@ -2,8 +2,8 @@
 /**
  * @Author: winterswang
  * @Date:   2015-06-24 14:40:09
- * @Last Modified by:   winterswang
- * @Last Modified time: 2015-07-06 21:36:31
+ * @Last Modified by:   wangguangchao
+ * @Last Modified time: 2015-07-15 15:25:11
  */
 
 namespace Swoole\Coroutine;
@@ -115,7 +115,7 @@ class Task {
                 /*
                     出栈，回射数据
                  */
-                if ($this ->corStack ->isEmpty) {
+                if ($this ->corStack ->isEmpty()) {
                     return ;
                 }
                 \SysLog::info(__METHOD__." corStack pop ", __CLASS__);

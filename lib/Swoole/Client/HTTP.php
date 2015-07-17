@@ -1,230 +1,238 @@
 <?php
 /**
  * @Author: winterswang
- * @Date:   2015-06-27 15:35:48
+ * @Date:   2015-07-15 21:16:41
  * @Last Modified by:   wangguangchao
- * @Last Modified time: 2015-07-09 19:02:11
+ * @Last Modified time: 2015-07-17 20:48:34
  */
-
-// 增加命名空间
 namespace Swoole\Client;
 
-//require_once "Base.php";
+require_once "Base.php";
+require_once "Timer.php";
+require_once "../test/SysLog.php";
 
-class HTTP extends Base {
-    public $host, $port, $path;
-    public $scheme;
-    public $method;
-    public $postdata = '';
-    public $cookies = array();
-    public $referer;
-    public $accept = 'text/xml,application/xml,application/xhtml+xml,text/html,text/plain,image/png,image/jpeg,image/gif,*/*';
-    public $accept_encoding = 'gzip,deflate,sdch';
-    public $accept_language = 'zh-CN,zh;q=0.8,en;q=0.6,zh-TW;q=0.4,ja;q=0.2';
-    public $user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.116 Safari/537.36';
-    public $request_headers = array();
-    // * Options:
-    public $timeout = 20;
-    public $use_gzip = true;
-    public $persist_cookies = true;
-    public $persist_referers = false;
-    public $debug = false;
-    public $handle_redirects = true;
-    public $max_redirects = 5;
-    public $headers_only = false;
-    public $strict_redirects = false;
-    // * Basic authorization variables:
-    public $username, $password;
-    // * Response vars:
-    public $status;
-    public $headers = array();
-    public $rspHeaders = array();
-    public $content = '';
-    public $request = '';
-    public $errormsg;
-    // * Tracker variables:
-    public $redirect_count = 0;
-    public $callback;
-    public $calltime;
+class HTTPNEW extends Base {
 
-    public function __construct($host){
+	public $accept = 'text/xml,application/xml,application/xhtml+xml,text/html,text/plain,image/png,image/jpeg,image/gif,*/*';
+	public $acceptLanguage = 'zh-CN,zh;q=0.8,en;q=0.6,zh-TW;q=0.4,ja;q=0.2';
+	public $userAgent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.116 Safari/537.36';
+	public $acceptEncoding = 'gzip,deflate,sdch';
 
+	public $requestHeaders = array();
+	public $rspHeaders = array();
 
-        date_default_timezone_set('asia/shanghai');
+	public $persistReferers = false; //
+	public $handleRedirects = false; //暂不支持重定向
+	public $redirectCount = 0;
+	public $maxRedirects = 5;
+	public $persistCookies = false; //cookie 
 
-        if (!isset($host)) {
-           \SysLog::warn(__METHOD__." MISSING HOST",__CLASS__); 
-        }
-        $this ->referer = $host;
-        $bits = parse_url($host);
-        if(isset($bits['scheme']) && isset($bits['host'])) {
-            $host = $bits['host'];
-            $scheme = isset($bits['scheme']) ? $bits['scheme'] : 'http';
-            $port = isset($bits['port']) ? $bits['port'] : 80;
-            $path = isset($bits['path']) ? $bits['path'] : '';
-            
-            if (isset($bits['query']))
-                $path .= '?'.$bits['query'];
-        }
-        $this->host = $host;
-        $this->port = $port;
-        if(isset($bits['scheme']) && isset($bits['host'])) {
-            $this->setScheme($scheme);
-            $this->setPath($path);
-            $this->setMethod("GET");
-        }
-    }
+	public $username;
+	public $password;
+	public $calltime;
+	public $callback;
+	public $timeout;
+	public $postdata;
 
-    public function setRequestHeaders($array) {
-        foreach($array as $key => $value) {
-            $this->request_headers[$key] = $value;
-        }
-    }
+	public $cookies = array();
+	public $request = '';
+	public $method;
+	public $useGzip = true;
+	public $referer;
 
-    public function setMethod($method) {
-        // Manually set the request method (not usually needed).
-        if (!in_array($method, array("GET","POST","PUT","DEL"."ETE"))){
-        	\SysLog::error(__METHOD__. ' valid method : '.$method, __CLASS__);
-        	return false;
-        }
-        $this->method = $method;
-        return true;
-    }
+	public $contents = '';
+	public $host;
+	public $port;
+	public $path;
+	public $key;
 
-    public function setPath($path) {
-        // Manually set the path (not usually needed).
-        $this->path = $path;
-    }
+	private $firstRsp = true;
 
-    public function setTimeout($timeout){
+	/**
+	 * [__construct 构造函数]
+	 * @param [type] $referer [description]
+	 */
+	public function __construct($uri){
 
-        $this ->timeout = $timeout;
-    }
+		$this ->referer = $uri;
 
-    public function setUserAgent($string) {
-        // Sets the user agent string to be used in the request.
-        // Default is "Incutio HttpClient v$version".
-        $this->user_agent = $string;
-    }
+		if (empty($uri)) {
+			return;
+		}
+		$info = parse_url($uri);
 
-    public function setAuthorization($username, $password) {
-        // Sets the HTTP authorization username and password to be used in requests.
-        // Warning: don't forget to unset this in subsequent requests to other servers!
-        $this->username = $username;
-        $this->password = $password;
-    }
+		//port
+		$this ->port = isset($info['port']) ? $info['port'] : 80;
+		// scheme
+		if (!isset($info['scheme'])) {
 
-    public function setScheme($scheme) {
-        // Manually set the path (not usually needed).
-        switch($scheme) {
-            case 'https':
-                $this->scheme = $scheme;
-                //TODO 暂不支持
-                $this->port = 443;
-                break;
-            case 'http':
-            default:
-                $this->scheme = 'http';
-        }
-    }
+			\SysLog::error(__METHOD__ . " miss scheme ", __CLASS__);
+			return false;
+		}
+		if ('https' === $info['scheme']) {
+			$this ->port = 443;
+		}
+		//host
+		if (!isset($info['host'])) {
+			
+			\SysLog::error(__METHOD__ . " miss host ", __CLASS__);
+			return false;
+		}
+		$this ->host = $info['host'];
+		$this ->key = md5($uri . microtime(true) . rand(0,10000));
+	}
 
-    public function buildRequest(){
+	/**
+	 * [get get方法]
+	 * @param  [type] $path    [description]
+	 * @param  array  $data    [description]
+	 * @param  array  $headers [description]
+	 * @return [type]          [description]
+	 */
+	public function get($path, $data = array(), $headers = array()){
 
-        $headers = array();
-        $headers[] = "{$this->method} {$this->path} HTTP/1.1"; // * Using 1.1 leads to all manner of problems, such as "chunked" encoding
-        $headers[] = "Host: {$this->host}";
-        if ($this->referer)
-            $headers[] = "Referer: {$this->referer}";
-        // * Cookies:
-        if (@$this->cookies[$this->host]) {
-            $cookie = 'Cookie: ';
-            foreach ($this->cookies[$this->host] as $key => $value) {
-                $cookie .= "$key=$value; ";
-            }
-            //多了一个 ； 注意一下
+		/*
+			拼接url,组装header信息，发送请求
+		 */
+		$this ->method = 'GET';
+		$this ->path = $path;
 
-            $headers[] = $cookie;
-        }
-        // * Basic authentication:
-        if ($this->username && $this->password)
-            $headers[] = 'Authorization: BASIC '.base64_encode($this->username.':'.$this->password);
-        // * If this is a POST, set the content type and length:
-        if(!empty($this->request_headers)) {
-            foreach($this->request_headers as $key => $val) {
-                if($val===false) {
-                    // do nothing
-                } else {
-                    $headers[] = $key.': '.$val;
-                }
-            }
-        }
-        if ($this->use_gzip && !isset($this->request_headers['Accept-encoding']))
-            $headers[] = "Accept-encoding: {$this->accept_encoding}";
-        // If it is a POST, add Content-Type.
-        if (!isset($this->request_headers['Content-Type']) &&
-            $this->method == 'POST') {
-            $headers[] = "Content-Type: application/x-www-form-urlencoded";
-        }
-        if (!isset($this->request_headers['User-Agent']))
-            $headers[] = "User-Agent: {$this->user_agent}";
-        if (!isset($this->request_headers['Accept']))
-            $headers[] = "Accept: {$this->accept}";
-        if (!isset($this->request_headers['Accept-language']))
-            $headers[] = "Accept-language: {$this->accept_language}";
-        if ($this->postdata && !isset($this->request_headers['Content-Length'])) {
-            $headers[] = 'Content-Length: '.strlen($this->postdata);
-        }
-        $this ->request = implode("\r\n", $headers)."\r\n\r\n".$this->postdata; 	
-    }
+		//拼接请求数据
+		if (!empty($data)) {
+			$this ->path .= http_build_query($data);
+		}
 
-    public function buildQuery($data) {
-        
-        if(is_string($data)) {
-            $this->postdata = $data;
-            return true;
-        } else if(is_object($data) || is_array($data)){
-            $this->postdata = http_build_query($data);
-            return true;
-        } else {
-            //trigger_error("HttpClient::postdata : '".gettype($data)."' is not valid post data.", E_USER_ERROR);
-            return false;
-        }
-    }
+		//设置请求headers信息
+		if (!empty($headers)) {
+			$this ->requestHeaders = $this ->setRequestHeaders($headers);
+		}
 
-    public function get($path, $data = null, $headers=array()){
+		$this ->buildRequest();
+	//	\SysLog::debug(__METHOD__ . " httpclient == " .print_r($this, true), __CLASS__);
+		return $this;
+	}
 
-        $this->orig_path = $this->path;
-        if(!empty($this->path))
-            $this->path .= $path;
-        else
-            $this->path = $path;
-        $this->method = 'GET';
-        if ($data) $this->path .= '?'.http_build_query($data);
-        $this->setRequestHeaders($headers);
-        $this->buildRequest();
+	/**
+	 * [post post方法]
+	 * @param  [type] $path    [description]
+	 * @param  [type] $data    [description]
+	 * @param  [type] $headers [description]
+	 * @return [type]          [description]
+	 */
+	public function post($path, $data, $headers){
 
-        
-        \SysLog::info(__METHOD__." GET RESULT = ". print_r($this,true), __CLASS__);
-        yield $this;
-    }
+		$this ->method = 'POST';
+        $this ->setRequestHeaders($headers);
 
-    public function post($path, $data, $headers=array()){
+        $this ->buildQuery($data);
+        $this ->buildRequest();
 
-        $this ->orig_path = $this->path;
-        if(!empty($this->path))
-            $this->path .= $path;
-        else
-            $this->path = $path;
-        $this->method = 'POST';
-        $this->setRequestHeaders($headers);
-        $this->buildQuery($data);
-        $this->buildRequest();
+        \SysLog::debug(__METHOD__ . " httpclient == " .print_r($this, true), __CLASS__);
+        return $this;
+	}
 
-        \SysLog::info(__METHOD__." POST RESULT = ". print_r($this,true), __CLASS__);
-        yield $this;
-    }
+	/**
+	 * [useGzip 是否压缩]
+	 * @param  [type] $boolean [description]
+	 * @return [type]          [description]
+	 */
+	public function useGzip($boolean){
 
-    public function send(callable $callback){
+		$this ->useGzip = $boolean;
+	}
+
+	/**
+	 * [setUserAgent 设置代理]
+	 * @param [type] $string [description]
+	 */
+	public function setUserAgent($string) {
+
+		$this->user_agent = $string;
+	}
+	
+	/**
+	 * [setAuthorization 设置权限]
+	 * @param [type] $username [description]
+	 * @param [type] $password [description]
+	 */
+	public function setAuthorization($username, $password) {
+
+		$this->username = $username;
+		$this->password = $password;
+	}	
+
+	/**
+	 * [getCookies 获取cookies]
+	 * @param  [type] $host [description]
+	 * @return [type]       [description]
+	 */
+	public function getCookies($host = null) {
+		
+		if(isset($this->cookies[isset($host) ? $host : $this->host])){
+
+			return $this->cookies[isset($host) ? $host : $this->host];
+		}
+		return array();
+	}
+	
+	/**
+	 * [setCookies 设置cookies]
+	 * @param [type]  $array   [description]
+	 * @param boolean $replace [description]
+	 */
+	public function setCookies($array, $replace = false) {
+		
+		if ($replace || (!isset($this ->cookies[$this ->host])) || (!is_array($this->cookies[$this->host]))){
+
+			$this->cookies[$this->host] = array();
+		}
+
+		$this->cookies[$this->host] = array_merge($array, $this ->cookies[$this ->host]);
+	}
+
+	/**
+	 * [setPersistReferers 设置重定向时，是否保持referer]
+	 * @param [type] $boolean [description]
+	 */
+	public function setPersistReferers($boolean) {
+
+		$this->persistReferers = $boolean;
+	}
+	
+	/**
+	 * [setHandleRedirects 设置是否支持重定向]
+	 * @param [type] $boolean [description]
+	 */
+	public function setHandleRedirects($boolean) {
+
+		$this->handleRedirects = $boolean;
+	}
+	
+	/**
+	 * [setMaxRedirects 设置重定向总次数]
+	 * @param [type] $num [description]
+	 */
+	public function setMaxRedirects($num) {
+
+		$this->maxRedirects = $num;
+	}
+
+	/**
+	 * [setPersistCookies 设置cookie保持]
+	 * @param [type] $boolean [description]
+	 */
+	public function setPersistCookies($boolean) {
+		
+		$this->persistCookies = $boolean;
+		
+	}
+
+	/**
+	 * [send 异步IO，定时器设置，异常回调]
+	 * @param  callable $callback [description]
+	 * @return [type]             [description]
+	 */
+	public function send(callable $callback){
 
         $client = new  \swoole_client(SWOOLE_SOCK_TCP, SWOOLE_SOCK_ASYNC);
 
@@ -236,89 +244,273 @@ class HTTP extends Base {
         });
 
         $client->on('error', function($cli) use($callback){
+            
             $cli ->close();
-            call_user_func_array($callback, array('r' => 1, 'key' => $this ->key,  'error_msg' => 'conncet error'));
+            $this ->calltime = microtime(true) - $this ->calltime;
+            call_user_func_array($callback, array('r' => 1, 'key' => $this ->key, 'calltime' => $this ->calltime, 'error_msg' => 'conncet error'));
         });
 
         $client->on("receive", function($cli, $data) use($callback){
-            call_user_func_array(array($this, 'packRsp'), array('r' => 0, 'key' => $cli, 'data' =>$data));
+            /*
+                这里的on receivce会被触发多次，耗时和取消定时器都不在这里处理，在packRsp函数里
+             */
+            call_user_func_array(array($this, 'packRsp'), array('key' => $cli, 'data' => $data));
         });
 
         $this ->callback = $callback;
-        if($client->connect($this ->host, $this ->port, $this ->timeout)){//同步调用 优化下？ flag = 1
+        if($client->connect($this ->host, $this ->port, $this ->timeout)){
+
             $this ->calltime = microtime(true);
+            if (floatval(($this ->timeout)) >0) {
+                Timer::add($this ->key, $this ->timeout, $client, $callback, array('r' => 2 ,'key' => $this ->key, 'calltime' => $this ->calltime, 'error_msg' => $this ->host . ':'. $this ->port .' timeout'));
+            }
+        }
+	}
+
+	/**
+	 * [setTimeout 定时]
+	 * @param [type] $timeout [description]
+	 */
+    public function setTimeout($timeout){
+
+        $this ->timeout = $timeout;
+    }
+
+	/**
+	 * [buildQuery description]
+	 * @param  [type] $data [description]
+	 * @return [type]       [description]
+	 */
+    private function buildQuery($data) {
+        
+        if(is_string($data)) {
+
+            $this->postdata = $data;
+            return true;
+        } 
+        else if(is_object($data) || is_array($data)){
+
+            $this->postdata = http_build_query($data);
+            return true;
+        } 
+        else {
+            return false;
         }
     }
-    
-    public function packRsp($r,$k,$data){
 
-    	if ($r != 0) {
-    		//LOG
-    		return;
-    	}
+	/**
+	 * [packRsp 组包合包，函数回调]
+	 * @param  [type] $cli  [description]
+	 * @param  [type] $data [description]
+	 * @return [type]       [description]
+	 */
+	private function packRsp($cli, $data){
 
-        $this ->content .= $data;
+		/*
+			1.设置标记位，开始时，解析头部信息
+			2.合并boty，两种头部协议
+			3.特殊处理 重定向+超时
+		 */
+		
 
-    	if (empty($this ->rspHeaders)) {
-    		$this ->parseHeader($data);
-    	}
-    	
-        $body_length = strlen($this ->content);
-        //判断包是否收全
-        //Content-Length
-        if (isset($this ->respHeader['Content-Length']) && $body_length == $this ->respHeader['Content-Length']) {
+		//parse header first
+		if ($this ->firstRsp) {
+			$rsp = explode("\r\n\r\n", $data, 2);
+			$this ->parseHeader($rsp[0]);
+			$this ->firstRsp = false;
+			$data = $rsp[1];
+		}
+
+		//编码
+		if (isset($this->rspHeaders['Content-Encoding']) && $this->rspHeaders['Content-Encoding'] == 'gzip') {
+
+			//$data = substr($data, 10);
+			//$data = gzinflate($data);
+		}
+		//cookie 保持
+		if ($this->persistCookies && isset($this->rspheaders['set-cookie'])) {
+
+			//TODO support
+		}
+
+		if ($this->handleRedirects) {
+
+			if (++ $this->redirectCount >= $this ->maxRedirects) {
+
+				\SysLog::error(__METHOD__ . " redirectCount over limit ", __CLASS__);
+				return false;
+			}
+			
+			$location = isset($this->rspheaders['location']) ? $this->rspheaders['location'] : '';
+			$location .= isset($this->rspheaders['uri']) ? $this->rspheaders['uri'] : '';
+
+			if (isset($location) && $this ->rspHeaders['status'] >= 300 && $this ->rspHeaders['status'] <= 400) {
+
+				\SysLog::debug(__METHOD__ . " redirect location ", __CLASS__);
+				//TODO 尝试client内部重定
+				$url = parse_url($location);
+				$this ->host = isset($url['host']) ? $url['host'] : $this ->host;
+				$this ->contents = '';
+
+				$http = $this ->get($location);
+				$this ->send(array($this, 'packRsp'));
+				return ;
+			}
+		}
+
+		//拼包 Content-Length	
+		if (isset($this ->rspHeaders['Content-Length'])) {
+			
+			$this ->contents .= $data;
+			$bodyLength = strlen($this ->contents);
+			if ($bodyLength == $this ->rspHeaders['Content-Length']) {
+				//pack finish
+				//TODO 回射数据
+                \SysLog::info('Content-Length pack finish content  == '. $this ->contents, __CLASS__);
+                $data = array('head' => $this ->rspHeaders, 'body' => $this ->contents);
+            
+                $cli ->close();
+                $this ->calltime = microtime(true) - $this ->calltime;
+                //echo " Content-Length pack finish \n";
+                call_user_func_array($this ->callback, array('r' => 0, 'key' => $this ->key,'calltime' => $this ->calltime, 'data' =>$data));
+			}else{
+				//echo " Content-Length packing \n";
+			}
+		}
 
 
-            \SysLog::info(__METHOD__. "callback = ".print_r($this ->callback,true), __CLASS__);
-            \SysLog::info(__METHOD__." pack finish body === ".$this ->content, __CLASS__);
-
-            $data=array('head'=>$this->respHeader,'body'=>$this ->content);
-
-            $k ->close();
-            $this ->calltime = microtime(true) - $this ->calltime;
-            call_user_func_array($this ->callback, array('r' => 0, 'key' => '','calltime' => $this ->calltime, 'data' =>$data));
-        }
-        else{
-            \SysLog::info('header content-lengh = '.$this ->respHeader['Content-Length'] . ' content length == '. strlen($this ->content), __CLASS__);
-        }
-
-        //chunked 
-        if (isset($this->respHeader['Transfer-Encoding']) and $this->respHeader['Transfer-Encoding'] == 'chunked') {
-
-            //以\r\n分割为两个数组，第一部分是字节长，第二部分为body
-            //字节长不为零，合并body，字节长为零，合并body，返回
-            $parts = explode("\r\n", $data, 2);
-
-            if (intval($parts[0]) != 0 && isset($parts[1])) {
-                $this ->content .= $parts[1];
-                \SysLog::info('chunked packing content  == '. $this ->content, __CLASS__);
+		//拼包 chunked 
+		if (isset($this->rspHeaders['Transfer-Encoding']) and $this->rspHeaders['Transfer-Encoding'] == 'chunked') {
+	
+            if (!preg_match("/0\\r\\n\\r\\n/", $data)) {
+            	$parts = explode("\r\n", $data, 2);
+                $this ->contents .= $parts[1];
             }
             else{
-                \SysLog::info('chunked pack finish content  == '. $this ->content, __CLASS__);
-                $data=array('head'=>$this->respHeader,'body'=>$this ->content);
-
-                $k ->close();
+                
+                $data = str_replace("0\r\n\r\n", "", $data);
+                $this->contents .=$data;
+                $data=array('head' => $this->respHeader, 'body'=> $this ->contents);
+            
+            	Timer::del($this ->key);
+                $cli ->close();
                 $this ->calltime = microtime(true) - $this ->calltime;
-                call_user_func_array($this ->callback, array('r' => 0, 'key' => '','calltime' => $this ->calltime, 'data' =>$data));
-            }
+                call_user_func_array($this ->callback, array('r' => 0, 'key' => $this ->key,'calltime' => $this ->calltime, 'data' =>$data));
+            }			
+		}
+		
+	}
+
+	/**
+	 * [setRequestHeaders 设置请求的headers]
+	 * @param array $headers [description]
+	 */
+	private function setRequestHeaders($headers = array()){
+
+		foreach($headers as $h_k => $h_v) {
+
+            $this->requestHeaders[$h_k] = $h_v;
+        }
+	}
+
+	/**
+	 * [buildRequest 创建request信息]
+	 * @return [type] [description]
+	 */
+	private function buildRequest(){
+		
+		$headers = array();
+		$headers[] = "{$this->method} {$this->path} HTTP/1.1";
+		$headers[] = "Host: {$this->host}";
+		$headers[] = "User-Agent: {$this->userAgent}";
+		$headers[] = "Accept: {$this->accept}";
+		
+		if (isset($this->useGzip)){
+
+			$headers[] = "Accept-encoding: {$this->acceptEncoding}";
+		}
+		
+		$headers[] = "Accept-language: {$this->acceptLanguage}";
+		
+		if (isset($this->referer)){
+
+			$headers[] = "Referer: {$this->referer}";
+		}
+		
+		if (isset($this->cookies[$this->host])) {
+			$cookie = 'Cookie: ';
+			foreach ($this->cookies[$this->host] as $key => $value) {
+				$cookie .= "$key=$value; ";
+			}
+			$headers[] = $cookie;
+		}
+		
+		if (isset($this->username) && isset($this->password)){
+
+			$headers[] = 'Authorization: BASIC '.base64_encode($this->username.':'.$this->password);
+		}
+		
+		if ($this->postdata) {
+			$headers[] = 'Content-Type: application/x-www-form-urlencoded';
+			$headers[] = 'Content-Length: '.strlen($this->postdata);
+		}
+
+		//将用户设置的header信息覆盖默认值
+		foreach ($this ->requestHeaders as $h_k => $h_v) {
+			
+			$headers[$h_k] = $h_v;
+		}
+		
+		$this ->request = implode("\r\n", $headers)."\r\n\r\n".$this->postdata;
+	
+	}
+
+	/**
+	 * [parseHeader description]
+	 * @param  [type] $headerBuf [description]
+	 * @return [type]            [description]
+	 */
+	private function parseHeader($headerBuf){
+
+		/*
+			version + status_code + message
+		 */
+		$headParts = explode("\r\n", $headerBuf);
+        if (is_string($headParts))
+        {
+            $headParts = explode("\r\n", $headParts);
         }
 
-    }
+		if (!is_array($headParts) || !count($headParts)) {
+			
+			//TODO header buffer valid
+			return false;
+		}
 
-    private function parseHeader($data){
+		list($this ->rspHeaders['protocol'], $this ->rspHeaders['status'], $this ->rspHeaders['msg']) = explode(' ', $headParts[0], 3);
+		unset($headParts[0]);
 
-    	$parts = explode("\r\n\r\n", $data, 2);
-		$headerLines = explode("\r\n", $parts[0]);
-		list($this ->rspHeaders['method'], $this ->rspHeaders['uri'], $this ->rspHeaders['protocol']) = explode(' ', $headerLines[0], 3);
+		foreach ($headParts as $header) {
+			
+			$header = trim($header);
+			if (empty($header)) {
+				continue;
+			}
 
-        $this->respHeader =  \Swoole\Http\Parser::parseHeaderLine($headerLines);
+			$h = explode(':', $header, 2);
+			$key = trim($h[0]);
+			$value = trim($h[1]);
+			$this ->rspHeaders[$key] = $value;
+		}
 
-        if (isset($parts[1])) {
-            $this ->content = $parts[1];
-        }
+		\SysLog::debug(__METHOD__ . " header == " . print_r($this ->rspHeaders,true), __CLASS__);
+	}
 
-        //print_r($this ->respHeader);
-        \SysLog::info(__METHOD__." header == ".print_r($this ->respHeader,true), __CLASS__);
-    }
+	// public function test($r, $k ,$ct, $data){
 
+	// 	echo " r == $r k == $k ct == $ct \n";
+	// 	file_put_contents('/tmp/test.html', $data[1]);
+	// }
 }
+
+
