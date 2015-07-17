@@ -3,13 +3,9 @@
  * @Author: winterswang
  * @Date:   2015-07-15 21:16:41
  * @Last Modified by:   wangguangchao
- * @Last Modified time: 2015-07-17 20:48:34
+ * @Last Modified time: 2015-07-17 20:56:57
  */
 namespace Swoole\Client;
-
-require_once "Base.php";
-require_once "Timer.php";
-require_once "../test/SysLog.php";
 
 class HTTPNEW extends Base {
 
