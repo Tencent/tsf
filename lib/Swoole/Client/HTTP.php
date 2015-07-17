@@ -7,7 +7,7 @@
  */
 namespace Swoole\Client;
 
-class HTTPNEW extends Base {
+class HTTP extends Base {
 
 	public $accept = 'text/xml,application/xml,application/xhtml+xml,text/html,text/plain,image/png,image/jpeg,image/gif,*/*';
 	public $acceptLanguage = 'zh-CN,zh;q=0.8,en;q=0.6,zh-TW;q=0.4,ja;q=0.2';
