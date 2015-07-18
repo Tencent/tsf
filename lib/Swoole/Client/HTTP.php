@@ -18,7 +18,7 @@ class HTTP extends Base {
 	public $rspHeaders = array();
 
 	public $persistReferers = false; //
-	public $handleRedirects = true; //暂不支持重定向
+	public $handleRedirects = true; //重定向
 	public $redirectCount = 0;
 	public $maxRedirects = 5;
 	public $persistCookies = false; //cookie 
@@ -27,7 +27,7 @@ class HTTP extends Base {
 	public $password;
 	public $calltime;
 	public $callback;
-	public $timeout=5;
+	public $timeout=10;
 	public $postdata;
 
 	public $cookies = array();
@@ -90,7 +90,7 @@ class HTTP extends Base {
 		$this ->host = $info['host'];
 		
 		//path
-		$this ->path = $info['path']?$info['path']:"/";
+		$this ->path = isset($info['path'])?$info['path']:"/";
 		
 		//request data
 		if(!empty($data)){
@@ -129,7 +129,7 @@ class HTTP extends Base {
 	function parseBody()
 	{
 	    //解析trunk
-	    if (isset($this->rspHeaders['Transfer-Encoding']) and $this->rspHeaders['Transfer-Encoding'] == 'chunked')
+	    if (isset($this->rspHeaders['transfer-encoding']) and $this->rspHeaders['transfer-encoding'] == 'chunked')
 	    {
 	        while(1)
 	        {
@@ -166,7 +166,7 @@ class HTTP extends Base {
 	    //普通的Content-Length约定
 	    else
 	    {
-	        if (strlen($this->buffer) < $this->rspHeaders['Content-Length'])
+	        if (strlen($this->buffer) < $this->rspHeaders['content-length'])
 	        {
 	            return false;
 	        }
@@ -459,8 +459,7 @@ class HTTP extends Base {
 		    }
 		    else
 		    {
-		        
-		        if ($this->handleRedirects) {
+		        if ($this->handleRedirects&&$this ->rspHeaders['status'] >= 300 && $this ->rspHeaders['status'] < 400) {
 		            //超出最大循环
 		            if (++ $this->redirectCount >= $this ->maxRedirects) {
 		                $cli ->close();
@@ -468,14 +467,13 @@ class HTTP extends Base {
 		                
 		                \SysLog::error(__METHOD__ . " redirectCount over limit ", __CLASS__);
 		                
-		                call_user_func_array($this ->callback, array('r' => 2, 'error_msg' =>"redirectCount over limit "));
+		                call_user_func_array($this ->callback, array('r' => 1, 'key' => $this ->key,'calltime' => $this ->calltime, 'data' =>"redirectCount over limit"));
 		                return false;
 		            }
 		            	
-		            $location = isset($this->rspHeaders['Location']) ? $this->rspHeaders['Location'] : '';
-		            $location .= isset($this->rspHeaders['Uri']) ? $this->rspHeaders['Uri'] : '';
-		            	
-		            if (isset($location) && $this ->rspHeaders['status'] >= 300 && $this ->rspHeaders['status'] <= 400) {
+		            $location = isset($this->rspHeaders['location']) ? $this->rspHeaders['location'] : '';
+		            $location .= isset($this->rspHeaders['uri']) ? $this->rspHeaders['uri'] : '';
+		            if (!empty($location)) {
 		        
 		                \SysLog::debug(__METHOD__ . " redirect location ", __CLASS__);
 		                //TODO 尝试client内部重定
@@ -489,32 +487,41 @@ class HTTP extends Base {
 		                $http = $this ->get($location);
 		                $http ->send($this->callback);
 		                return ;
+		            }else{
+		                $cli ->close();
+		                Timer::del($this ->key);
+		                
+		                \SysLog::error(__METHOD__ . " redirect location error  ", __CLASS__);
+		                
+		                call_user_func_array($this ->callback, array('r' => 1, 'key' => $this ->key,'calltime' => $this ->calltime, 'data' =>"redirect location error "));
+		                return false;
 		            }
 		        }
+		        
 		        
 		        //header + CRLF + body
 		        if (strlen($this->buffer) > 0)
 		        {
-		            goto parse_body;
+		            $parsebody = $this->parseBody();
 		        }
 		    }
 		}
 		else
 		{
-		    parse_body:
-		    if ($this->parseBody() === true and $this->isFinish)
-		    {
-		        $compress_type = empty($this->rspHeaders['Content-Encoding'])?'':$this->rspHeaders['Content-Encoding'];
-		        
-		        $this->body = self::gz_decode($this->body, $compress_type);
-		         
-		        $data = array('head' => $this ->rspHeaders, 'body' => $this ->body);
-		        $cli ->close();
-		        $this ->calltime = microtime(true) - $this ->calltime;
-		        Timer::del($this ->key);
-		        //echo " Content-Length pack finish \n";
-		        call_user_func_array($this ->callback, array('r' => 0, 'key' => $this ->key,'calltime' => $this ->calltime, 'data' =>$data));
-		    }
+		    $parsebody = $this->parseBody();
+		}
+		
+		if ($parsebody === true and $this->isFinish)
+		{
+		    $compress_type = empty($this->rspHeaders['content-encoding'])?'':$this->rspHeaders['content-encoding'];
+		
+		    $this->body = self::gz_decode($this->body, $compress_type);
+		     
+		    $data = array('head' => $this ->rspHeaders, 'body' => $this ->body);
+		    $cli ->close();
+		    $this ->calltime = microtime(true) - $this ->calltime;
+		    Timer::del($this ->key);
+		    call_user_func_array($this ->callback, array('r' => 0, 'key' => $this ->key,'calltime' => $this ->calltime, 'data' =>$data));
 		}
 		
 	}
@@ -621,7 +628,7 @@ class HTTP extends Base {
 			$h = explode(':', $header, 2);
 			$key = trim($h[0]);
 			$value = trim($h[1]);
-			$this ->rspHeaders[$key] = $value;
+			$this ->rspHeaders[strtolower($key)] = $value;
 		}
 		
 		if (isset($parts[1]))
