@@ -18,7 +18,7 @@ class HTTP extends Base {
 	public $rspHeaders = array();
 
 	public $persistReferers = false; //
-	public $handleRedirects = false; //暂不支持重定向
+	public $handleRedirects = true; //暂不支持重定向
 	public $redirectCount = 0;
 	public $maxRedirects = 5;
 	public $persistCookies = false; //cookie 
@@ -27,7 +27,7 @@ class HTTP extends Base {
 	public $password;
 	public $calltime;
 	public $callback;
-	public $timeout;
+	public $timeout=5;
 	public $postdata;
 
 	public $cookies = array();
@@ -36,32 +36,45 @@ class HTTP extends Base {
 	public $useGzip = true;
 	public $referer;
 
-	public $contents = '';
+	public $body = '';
+	public $url;
 	public $host;
 	public $port;
 	public $path;
 	public $key;
 
-	private $firstRsp = true;
+	protected $buffer = '';
+	protected $isError = false;
+	protected $isFinish = false;
+	protected $status = array();
+	protected $trunk_length = 0;
 
 	/**
 	 * [__construct 构造函数]
-	 * @param [type] $referer [description]
+	 * @param string $url
+	 * @param string $method
+	 * @param string||array $data
+	 * @param int $timeout  Second
 	 */
-	public function __construct($uri){
+	public function __construct($url,$method="GET",$data=NULL,$timeout=NULL){
 
-		$this ->referer = $uri;
-
-		if (empty($uri)) {
+		if (empty($url)) {
 			return;
 		}
-		$info = parse_url($uri);
+		
+		$this->url = $this ->referer = $url;
+		$this->method = $method;
+		
+		if($timeout){
+		    $this->timeout = $timeout;
+		}
+		
+		$info = parse_url($url);
 
 		//port
 		$this ->port = isset($info['port']) ? $info['port'] : 80;
 		// scheme
 		if (!isset($info['scheme'])) {
-
 			\SysLog::error(__METHOD__ . " miss scheme ", __CLASS__);
 			return false;
 		}
@@ -75,7 +88,120 @@ class HTTP extends Base {
 			return false;
 		}
 		$this ->host = $info['host'];
-		$this ->key = md5($uri . microtime(true) . rand(0,10000));
+		
+		//path
+		$this ->path = $info['path']?$info['path']:"/";
+		
+		//request data
+		if(!empty($data)){
+		    $this->buildQuery($data);
+		}
+		
+		$this->buildRequest();
+		
+	}
+	
+	/**
+	* @desc set key  
+	* @param string $key 
+	* @return  
+	*/
+	public function setKey($key=NULL){
+	    if(empty($key)){
+	        $this ->key = md5($this->url . microtime(true) . rand(0,10000));
+	    }else{
+	        $this ->key = $key;
+	    }
+	}
+	
+	/**
+	 * @desc get key
+	 * @return string $this->key
+	 */
+	public function getKey(){
+	    return $this ->key;
+	}
+	
+	/**
+	* @desc 数据解析 
+	* @return boolean 
+	*/
+	function parseBody()
+	{
+	    //解析trunk
+	    if (isset($this->rspHeaders['Transfer-Encoding']) and $this->rspHeaders['Transfer-Encoding'] == 'chunked')
+	    {
+	        while(1)
+	        {
+	            if ($this->trunk_length == 0)
+	            {
+	                $_len = strstr($this->buffer, "\r\n", true);
+	                if ($_len === false)
+	                {
+	                    return false;
+	                }
+	                $length = hexdec($_len);
+	                if ($length == 0)
+	                {
+	                    $this->isFinish = true;
+	                    return true;
+	                }
+	                $this->trunk_length = $length;
+	                $this->buffer = substr($this->buffer, strlen($_len) + 2);
+	            }
+	            else
+	            {
+	                //数据量不足，需要等待数据
+	                if (strlen($this->buffer) < $this->trunk_length)
+	                {
+	                    return false;
+	                }
+	                $this->body .= substr($this->buffer, 0, $this->trunk_length);
+	                $this->buffer = substr($this->buffer, $this->trunk_length + 2);
+	                $this->trunk_length = 0;
+	            }
+	        }
+	        return false;
+	    }
+	    //普通的Content-Length约定
+	    else
+	    {
+	        if (strlen($this->buffer) < $this->rspHeaders['Content-Length'])
+	        {
+	            return false;
+	        }
+	        else
+	        {
+	            $this->body = $this->buffer;
+	            $this->isFinish = true;
+	            return true;
+	        }
+	    }
+	}
+	
+	/**
+	* @desc 数据解压 
+	* @param $data 
+	* @return string $data 
+	*/
+	static function gz_decode($data, $type = 'gzip')
+	{
+	    if ($type == 'gzip')
+	    {
+	        return gzdecode($data);
+	    }
+	    elseif ($type == 'deflate')
+	    {
+	        return gzinflate($data);
+	    }
+	    elseif($type == 'compress')
+	    {
+	        return gzinflate(substr($data,2,-4));
+	    }
+	    else
+	    {
+	        return $data;
+	    }
 	}
 
 	/**
@@ -308,91 +434,87 @@ class HTTP extends Base {
 			3.特殊处理 重定向+超时
 		 */
 		
-
-		//parse header first
-		if ($this ->firstRsp) {
-			$rsp = explode("\r\n\r\n", $data, 2);
-			$this ->parseHeader($rsp[0]);
-			$this ->firstRsp = false;
-			$data = $rsp[1];
-		}
-
-		//编码
-		if (isset($this->rspHeaders['Content-Encoding']) && $this->rspHeaders['Content-Encoding'] == 'gzip') {
-
-			//$data = substr($data, 10);
-			//$data = gzinflate($data);
-		}
+	    $this->buffer .= $data;
+	    
 		//cookie 保持
-		if ($this->persistCookies && isset($this->rspheaders['set-cookie'])) {
+		if ($this->persistCookies && isset($this->rspHeaders['set-cookie'])) {
 
 			//TODO support
 		}
 
-		if ($this->handleRedirects) {
-
-			if (++ $this->redirectCount >= $this ->maxRedirects) {
-
-				\SysLog::error(__METHOD__ . " redirectCount over limit ", __CLASS__);
-				return false;
-			}
-			
-			$location = isset($this->rspheaders['location']) ? $this->rspheaders['location'] : '';
-			$location .= isset($this->rspheaders['uri']) ? $this->rspheaders['uri'] : '';
-
-			if (isset($location) && $this ->rspHeaders['status'] >= 300 && $this ->rspHeaders['status'] <= 400) {
-
-				\SysLog::debug(__METHOD__ . " redirect location ", __CLASS__);
-				//TODO 尝试client内部重定
-				$url = parse_url($location);
-				$this ->host = isset($url['host']) ? $url['host'] : $this ->host;
-				$this ->contents = '';
-
-				$http = $this ->get($location);
-				$this ->send(array($this, 'packRsp'));
-				return ;
-			}
+		
+		if ($this->trunk_length > 0 and strlen($this->buffer) < $this->trunk_length)
+		{
+		    return;
 		}
-
-		//拼包 Content-Length	
-		if (isset($this ->rspHeaders['Content-Length'])) {
-			
-			$this ->contents .= $data;
-			$bodyLength = strlen($this ->contents);
-			if ($bodyLength == $this ->rspHeaders['Content-Length']) {
-				//pack finish
-				//TODO 回射数据
-                \SysLog::info('Content-Length pack finish content  == '. $this ->contents, __CLASS__);
-                $data = array('head' => $this ->rspHeaders, 'body' => $this ->contents);
-            
-                $cli ->close();
-                $this ->calltime = microtime(true) - $this ->calltime;
-                //echo " Content-Length pack finish \n";
-                call_user_func_array($this ->callback, array('r' => 0, 'key' => $this ->key,'calltime' => $this ->calltime, 'data' =>$data));
-			}else{
-				//echo " Content-Length packing \n";
-			}
+		
+		if (empty($this->rspHeaders))
+		{
+		    
+		    $ret = $this->parseHeader($this->buffer) ;
+		    
+		    if ($ret === false)
+		    {
+		        return;
+		    }
+		    else
+		    {
+		        
+		        if ($this->handleRedirects) {
+		            //超出最大循环
+		            if (++ $this->redirectCount >= $this ->maxRedirects) {
+		                $cli ->close();
+		                Timer::del($this ->key);
+		                
+		                \SysLog::error(__METHOD__ . " redirectCount over limit ", __CLASS__);
+		                
+		                call_user_func_array($this ->callback, array('r' => 2, 'error_msg' =>"redirectCount over limit "));
+		                return false;
+		            }
+		            	
+		            $location = isset($this->rspHeaders['Location']) ? $this->rspHeaders['Location'] : '';
+		            $location .= isset($this->rspHeaders['Uri']) ? $this->rspHeaders['Uri'] : '';
+		            	
+		            if (isset($location) && $this ->rspHeaders['status'] >= 300 && $this ->rspHeaders['status'] <= 400) {
+		        
+		                \SysLog::debug(__METHOD__ . " redirect location ", __CLASS__);
+		                //TODO 尝试client内部重定
+		                $url = parse_url($location);
+		                $this ->host = isset($url['host']) ? $url['host'] : $this ->host;
+		                $this ->body = '';
+		                $this->buffer = '';
+		                $this->rspHeaders = array();
+		                $this->isFinish = false;
+		                
+		                $http = $this ->get($location);
+		                $http ->send($this->callback);
+		                return ;
+		            }
+		        }
+		        
+		        //header + CRLF + body
+		        if (strlen($this->buffer) > 0)
+		        {
+		            goto parse_body;
+		        }
+		    }
 		}
-
-
-		//拼包 chunked 
-		if (isset($this->rspHeaders['Transfer-Encoding']) and $this->rspHeaders['Transfer-Encoding'] == 'chunked') {
-	
-            if (!preg_match("/0\\r\\n\\r\\n/", $data)) {
-            	$parts = explode("\r\n", $data, 2);
-                $this ->contents .= $parts[1];
-            }
-            else{
-                
-                $data = str_replace("0\r\n\r\n", "", $data);
-                $this->contents .=$data;
-                $data=array('head' => $this->respHeader, 'body'=> $this ->contents);
-            
-            	Timer::del($this ->key);
-                $cli ->close();
-                $this ->calltime = microtime(true) - $this ->calltime;
-                call_user_func_array($this ->callback, array('r' => 0, 'key' => $this ->key,'calltime' => $this ->calltime, 'data' =>$data));
-            }			
+		else
+		{
+		    parse_body:
+		    if ($this->parseBody() === true and $this->isFinish)
+		    {
+		        $compress_type = empty($this->rspHeaders['Content-Encoding'])?'':$this->rspHeaders['Content-Encoding'];
+		        
+		        $this->body = self::gz_decode($this->body, $compress_type);
+		         
+		        $data = array('head' => $this ->rspHeaders, 'body' => $this ->body);
+		        $cli ->close();
+		        $this ->calltime = microtime(true) - $this ->calltime;
+		        Timer::del($this ->key);
+		        //echo " Content-Length pack finish \n";
+		        call_user_func_array($this ->callback, array('r' => 0, 'key' => $this ->key,'calltime' => $this ->calltime, 'data' =>$data));
+		    }
 		}
 		
 	}
@@ -466,12 +588,15 @@ class HTTP extends Base {
 	 * @param  [type] $headerBuf [description]
 	 * @return [type]            [description]
 	 */
-	private function parseHeader($headerBuf){
+	private function parseHeader($data){
 
 		/*
 			version + status_code + message
 		 */
-		$headParts = explode("\r\n", $headerBuf);
+	    
+	    $parts = explode("\r\n\r\n", $data, 2);
+	    
+		$headParts = explode("\r\n", $parts[0]);
         if (is_string($headParts))
         {
             $headParts = explode("\r\n", $headParts);
@@ -498,8 +623,14 @@ class HTTP extends Base {
 			$value = trim($h[1]);
 			$this ->rspHeaders[$key] = $value;
 		}
+		
+		if (isset($parts[1]))
+		{
+		    $this->buffer = $parts[1];
+		}
 
 		\SysLog::debug(__METHOD__ . " header == " . print_r($this ->rspHeaders,true), __CLASS__);
+		return true;
 	}
 
 	// public function test($r, $k ,$ct, $data){

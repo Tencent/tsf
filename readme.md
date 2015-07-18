@@ -118,8 +118,11 @@ php swoole testHttpServ start
     $calls=new Swoole\Client\Multi();
     $firstReq=new Swoole\Client\TCP($ip, $port, $data, $timeout);
     $secondReq=new Swoole\Client\UDP($ip, $port, $data, $timeout);
+    $thirdReq= new Swoole\Client\HTTP("http://www.qq.com");
+
     $calls ->request($firstReq,'first');             //first request
     $calls ->request($secondReq,'second');             //second request
+    $calls ->request($thirdReq,'third');             //third request
     yield $calls;
   }
 
