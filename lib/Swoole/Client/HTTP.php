@@ -126,7 +126,7 @@ class HTTP extends Base {
 	* @desc 数据解析 
 	* @return boolean 
 	*/
-	function parseBody()
+	public function parseBody()
 	{
 	    //解析trunk
 	    if (isset($this->rspHeaders['transfer-encoding']) and $this->rspHeaders['transfer-encoding'] == 'chunked')
