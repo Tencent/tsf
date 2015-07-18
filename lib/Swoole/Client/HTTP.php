@@ -485,7 +485,7 @@ class HTTP extends Base {
 		                $this->buffer = '';
 		                $this->rspHeaders = array();
 		                $this->isFinish = false;
-		                
+		                $cli ->close();
 		                $http = $this ->get($location);
 		                $http ->send($this->callback);
 		                return ;
