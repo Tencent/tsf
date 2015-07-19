@@ -6,14 +6,14 @@
  * Time: 下午12:25
  */
 
-//实现createwebapplication 加载psf的代码 返回一个建好的类
+//实现createwebapplication 加载tsf的代码 返回一个建好的类
 
 
-//todo    autoload psf 和 src里面的所有代码
+//todo    autoload tsf 和 src里面的所有代码
 define('TSFBASEPATH', dirname(dirname(__FILE__)));
 require_once 'AutoLoad.php';
 require_once TSFBASEPATH.'/Swoole/require.php';        //添加swoole的代码
-AutoLoad::addRoot(TSFBASEPATH.'/tsf'); //autoload psf所有的代码
+AutoLoad::addRoot(TSFBASEPATH.'/tsf'); //autoload tsf所有的代码
 
 
 
