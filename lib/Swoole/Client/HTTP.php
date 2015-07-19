@@ -415,49 +415,55 @@ class HTTP extends Base {
 	 */
 	private function buildRequest(){
 		
-		$headers = array();
-		$headers[] = "{$this->method} {$this->path} HTTP/1.1";
-		$headers[] = "Host: {$this->host}";
-		$headers[] = "User-Agent: {$this->userAgent}";
-		$headers[] = "Accept: {$this->accept}";
+		$headers = "{$this->method} {$this->path} HTTP/1.1";
+
+		$headerArray = array();
+		$headerArray['Host'] = $this->host;
+		$headerArray['User-Agent'] = $this->userAgent;
+		$headerArray['Accept'] = $this->accept;
 		
 		if (isset($this->useGzip)){
 
-			$headers[] = "Accept-encoding: {$this->acceptEncoding}";
+			$headerArray['Accept-encoding'] = $this->acceptEncoding;
 		}
 		
-		$headers[] = "Accept-language: {$this->acceptLanguage}";
+		$headerArray['Accept-language'] = $this->acceptLanguage;
 		
 		if (isset($this->referer)){
 
-			$headers[] = "Referer: {$this->referer}";
+			$headerArray['Referer'] = $this->referer;
 		}
 		
 		if (isset($this->cookies[$this->host])) {
-			$cookie = 'Cookie: ';
+			$cookie = '';
 			foreach ($this->cookies[$this->host] as $key => $value) {
 				$cookie .= "$key=$value; ";
 			}
-			$headers[] = $cookie;
+			$headerArray['Cookie'] = $cookie;
 		}
 		
 		if (isset($this->username) && isset($this->password)){
 
-			$headers[] = 'Authorization: BASIC '.base64_encode($this->username.':'.$this->password);
+			$headerArray['Authorization'] = 'BASIC '.base64_encode($this->username.':'.$this->password);
 		}
 		
 		if ($this->postdata) {
-			$headers[] = 'Content-Type: application/x-www-form-urlencoded';
-			$headers[] = 'Content-Length: '.strlen($this->postdata);
+			$headerArray['Content-Type'] = 'application/x-www-form-urlencoded';
+			$headerArray['Content-Length'] = strlen($this->postdata);
 		}
 
 		//将用户设置的header信息覆盖默认值
 		foreach ($this ->requestHeaders as $h_k => $h_v) {
 			
-			$headers[$h_k] = $h_v;
+			$headerArray[$h_k] = $h_v;
 		}
-		
-		$this ->request = implode("\r\n", $headers)."\r\n\r\n".$this->postdata;
+
+		//拼header
+		foreach ($headerArray as $ha_k => $ha_v) {
+			$headers .= "\r\n{$ha_k}: {$ha_v}";
+		}
+
+		$this ->request = $headers."\r\n\r\n".$this->postdata;
 	
 	}
 
