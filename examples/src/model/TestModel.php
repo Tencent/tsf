@@ -52,6 +52,16 @@ class TestModel {
 	    yield $calls;
 	  }
 
+
+	public function HttpmuticallTest(){
+	  
+	      $calls=new Swoole\Client\Multi();
+	      $qq = new Swoole\Client\HTTP("http://www.qq.com/");
+	      $calls ->request($qq,"qq");             
+	  
+	      yield $calls;
+	}
+
 	public function tcpTest(){
 	    $ip = '127.0.0.1';
 	    $port = '9905';

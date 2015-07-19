@@ -29,9 +29,9 @@ class Timer {
 		\SysLog::info(__METHOD__ . " key == $key " , __CLASS__);
 
 		self::init();
-
+        
 		$event = array(
-			'timeout' => microtime(true) + self::LOOPTIME,
+			'timeout' => microtime(true) + $timeout,
 			'cli' => $cli,
 			'callback' => $callback,
 			'params' => $params,
@@ -50,23 +50,25 @@ class Timer {
 		}
 	}
 
-	public static function loop(){
+	public static function loop($timer_id){
 
 		\SysLog::info(__METHOD__, __CLASS__);
 		/*
 			遍历自己的数组，发现时间超过预定时间段，且该IO的状态依然是未回包状态，则走超时逻辑
 		 */
+		if(empty(self::$event)){
+		    \SysLog::info(__METHOD__ . " del event swoole_timer_clear == $timer_id ", __CLASS__);
+		    swoole_timer_clear($timer_id);
+		}
+		
 		foreach (self::$event as $socket => $e) {
 		
 		    $now = microtime(true);
 		    \SysLog::debug(__METHOD__ ." key == $socket  now == $now timeout == ".$e['timeout'], __CLASS__);
- 		   
 		    if($now > $e['timeout']){
-
 				self::del($socket);
 				$cli = $e['cli'];
 				$cli ->close();
-
 			    call_user_func_array($e['callback'], $e['params']);
 	        }
 		}
@@ -80,10 +82,9 @@ class Timer {
 
 		if (!self::$isOnTimer) {
 
-			swoole_timer_after(1000 * self::LOOPTIME, function(){
-
+			swoole_timer_tick(1000 * self::LOOPTIME, function($timer_id){
 			    //循环数组，踢出超时情况
-			    self::loop();
+			    self::loop($timer_id);
 			    self::$isOnTimer = false;
 			});
 			self::$isOnTimer = true;
