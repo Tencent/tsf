@@ -117,7 +117,8 @@ class HTTP extends Base {
 	 */
 	public function post($path, $data, $headers){
 
-		$this ->method = 'POST';
+        $this ->method = 'POST';
+        $this ->path = $path;
         $this ->setRequestHeaders($headers);
 
         $this ->buildQuery($data);
