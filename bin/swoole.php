@@ -147,11 +147,11 @@ if(CheckProcessExist() ){ //如果存在 说明已经运行了 则通过unixsock
         }
         //创建成功 进入daemon模式，开启unix sock
         echo $phpStart.' '.$name.' '.$cmd."\033[32;40m [SUCCESS] \033[0m".PHP_EOL;
-        //swoole_process::daemon();
+        swoole_process::daemon();
         //开启unixsock 监听模式
         //$RunningServer[$name]=$name;
         //修改，添加参数 包括php启动路径和名字
-    $RunningServer[$name]=array('php'=>$phpStart,'name'=>$name,"conf"=>$indexConf['conf'],"hash"=>array(),"reload"=>false,"first_start"=>true);
+    	$RunningServer[$name]=array('php'=>$phpStart,'name'=>$name,"conf"=>$indexConf['conf'],"hash"=>array(),"reload"=>false,"first_start"=>true);
         StartServSock($RunningServer);
     };
 
@@ -172,7 +172,7 @@ if(CheckProcessExist() ){ //如果存在 说明已经运行了 则通过unixsock
             };
             $servArr['name']=$config;
             if(StartServ($phpStart,'start',$name)){
-                $RunningServer[$name]=array('php'=>$phpStart,'name'=>$name);
+                $RunningServer[$name]=array('php'=>$phpStart,'name'=>$name,"conf"=>$indexConf['conf'],"hash"=>array(),"reload"=>false,"first_start"=>true);
                 echo $phpStart.' '.$name." start \033[32;40m [SUCCESS] \033[0m".PHP_EOL;
             }else{
                 echo " startall  \033[31;40m [FAIL] \033[0m".PHP_EOL;
@@ -180,7 +180,7 @@ if(CheckProcessExist() ){ //如果存在 说明已经运行了 则通过unixsock
         };
 
         //创建成功 进入daemon模式，开启unix sock
-        //swoole_process::daemon();
+        swoole_process::daemon();
         //开启unixsock 监听模式
         StartServSock($RunningServer);
     };
