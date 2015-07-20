@@ -368,7 +368,7 @@ function StartServ($phpStart,$cmd,$name){
 //用于和守护进程进行通信
 function sendCmdToServ($data){
     $client = new swoole_client(SWOOLE_UNIX_STREAM, SWOOLE_SOCK_SYNC);
-    $client->connect(uniSockPath, 0);
+    $client->connect(uniSockPath, 0,3);
     $client->send(json_encode($data));
     $ret=$client->recv();
     StartLog(__LINE__.print_r($ret,true));
