@@ -140,7 +140,7 @@ abstract class Server implements Server\Driver
             $this->sw->on('Task', array($this, 'onTask'));
             $this->sw->on('Finish', array($this, 'onFinish'));
         }
-
+		
         // add listener
         if (is_array($this->listen))
         {
@@ -200,6 +200,9 @@ abstract class Server implements Server\Driver
     {
         // echo __METHOD__;
         // exit();
+        
+    	opcache_reset();
+    	
         if($workerId >= $this->setting['worker_num'])
         {
             Console::setProcessName($this->processName  . ': task worker process');
@@ -382,6 +385,7 @@ abstract class Server implements Server\Driver
         }
         elseif (! posix_kill($managerId, 10))//USR1
         {
+        	
             $this->log("[warning] " . $this->processName . ": send signal to manager failed");
             $this->log($this->processName . ": stop\033[31;40m [FAIL] \033[0m");
             return false;

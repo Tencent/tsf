@@ -224,12 +224,11 @@ function StartServSock($RunServer)
             foreach ($serv->runServer as &$server) {
                 $path = pathinfo($server['conf']['server']['root']);
                 watchdog($path['dirname'],$server);
-        
-        $server['first_start'] = false;
+        		$server['first_start'] = false;
                 if($server['reload']){
                     $server['reload'] = false;
-                    StartServ($server['php'],'restart',$server['name']);
-                    echo "restart \n";
+                    StartServ($server['php'],'reload',$server['name']);
+                    StartLogTimer(__LINE__.' '.'server auto reload '.PHP_EOL);
                 }
             }
 
