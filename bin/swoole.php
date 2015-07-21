@@ -126,6 +126,9 @@ if(CheckProcessExist() ){ //如果存在 说明已经运行了 则通过unixsock
     if ($cmd == 'start')
     {
         $indexConf=getServerIni($name);
+        
+        $indexConf['conf']['setting']['watch_ext'] = explode(",", $indexConf['conf']['setting']['watch_ext']);
+        
         if($indexConf['r']!=0){ //
             echo "get server $name conf error".PHP_EOL;
             exit;
@@ -164,15 +167,20 @@ if(CheckProcessExist() ){ //如果存在 说明已经运行了 则通过unixsock
         foreach($configArr as $k => $v)
         {
             $name=basename($v, '.ini');
-            $config = parse_ini_file(STARTBASEPATH . "/conf/".$name.".ini", true);
-            $phpStart=$config['server']['php'];
+            $config = getServerIni($name);
+            
+            $config['conf']['setting']['watch_ext'] = explode(",", $config['conf']['setting']['watch_ext']);
+            
+            $phpStart=$config['conf']['server']['php'];
             if(empty($phpStart)){
                 echo " $name phpstartpath $phpStart not exist ".PHP_EOL;
                 continue;
             };
+            
             $servArr['name']=$config;
+            
             if(StartServ($phpStart,'start',$name)){
-                $RunningServer[$name]=array('php'=>$phpStart,'name'=>$name,"conf"=>$indexConf['conf'],"hash"=>array(),"reload"=>false,"first_start"=>true);
+                $RunningServer[$name]=array('php'=>$phpStart,'name'=>$name,"conf"=>$config['conf'],"hash"=>array(),"reload"=>false,"first_start"=>true);
                 echo $phpStart.' '.$name." start \033[32;40m [SUCCESS] \033[0m".PHP_EOL;
             }else{
                 echo " startall  \033[31;40m [FAIL] \033[0m".PHP_EOL;
@@ -199,7 +207,7 @@ function StartServSock($RunServer)
     $serv->runServer=$RunServer;
     $serv->set(array(
         'worker_num' => 1,
-        'daemonize'=> false
+        'daemonize'=> true
     ));
     $serv->on('WorkerStart', function ($serv, $workerId) {
         //监控周期
@@ -223,7 +231,7 @@ function StartServSock($RunServer)
     if($interval==500){
             foreach ($serv->runServer as &$server) {
                 $path = pathinfo($server['conf']['server']['root']);
-                watchdog($path['dirname'],$server);
+                server_auto_reload($path['dirname'],$server);
         		$server['first_start'] = false;
                 if($server['reload']){
                     $server['reload'] = false;
@@ -412,27 +420,27 @@ function printInfo(){
     exit;
 }
 
-function watchdog($path,&$server) {
+function server_auto_reload($path,&$server) {
 
     if(is_dir($path)){
         $dp = dir($path);
         while ($file = $dp ->read()){
             if($file !="." && $file !=".."){
-                watchdog($path."/".$file, $server);
+                server_auto_reload($path."/".$file, $server);
             }
         }
         $dp ->close();
     }
     if(is_file($path)){
         $file_info = pathinfo($path);
-        if($file_info['extension']==$server['conf']['setting']['watch_ext']){
+        if(in_array($file_info['extension'], $server['conf']['setting']['watch_ext'])){
             $hash = md5($path);
             $file_hash = md5_file($path);
             if(empty($server['hash'][$hash])||$server['hash'][$hash]!=$file_hash){
                 $server['hash'][$hash]= $file_hash;
-        if(!$server['first_start']){
+        		if(!$server['first_start']){
                     $server['reload'] =true;
-        }
+        		}
             }
         }
     }
