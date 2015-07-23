@@ -226,7 +226,7 @@ class HTTP extends Base {
 
 		//设置请求headers信息
 		if (!empty($headers)) {
-			$this ->requestHeaders = $this ->setRequestHeaders($headers);
+			$this ->setRequestHeaders($headers);
 		}
 
 		$this ->buildRequest();
