@@ -57,10 +57,23 @@ class TestModel {
 	  
 	      $calls=new Swoole\Client\Multi();
 	      $qq = new Swoole\Client\HTTP("http://www.qq.com/");
+	      $oschina = new Swoole\Client\HTTP("http://www.oschina.net/");
 	      $calls ->request($qq,"qq");             
-	  
+	      $calls ->request($oschina,"oschina");
 	      yield $calls;
 	}
+	
+	
+	public function MysqlMuticallTest(){
+		$calls=new Swoole\Client\Multi();
+		$test = new Swoole\Client\DB("select * from test");
+		$test2 = new Swoole\Client\DB("desc test");
+		$calls ->request($test,"test");
+		$calls ->request($test2,"desc");
+		yield $calls;
+	}
+	
+	
 
 	public function tcpTest(){
 	    $ip = '127.0.0.1';

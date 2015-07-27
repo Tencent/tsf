@@ -60,7 +60,6 @@ class DB extends Base{
         $callback = $task['callback'];
 
         if ($result = $mysqli->reap_async_query()) {
-        	var_dump($result);
         	$this ->calltime = $this ->calltime - microtime(true);
         	call_user_func_array($this ->callback, array('r' => 0, 'key' => $this->key, 'calltime' => $this ->calltime, 'data' => $result ->fetch_all()));
             if (is_object($result)) {
