@@ -127,8 +127,32 @@ php swoole testHttpServ start
   }
 
   var_dump($res)
-  
+
 ```
+
+```
+####  Mysql pool and Muticall
+
+```php
+
+    //query
+    public function Dbtest(){
+            $db = new Swoole\Client\DB();
+            yield $db->query("select * from test");
+    }
+
+    //Muticall
+    public function MysqlMuticallTest(){
+    		$calls=new Swoole\Client\Multi();
+    		$select = new Swoole\Client\DB("select * from test");
+    		$desc = new Swoole\Client\DB("desc test");
+    		$calls ->request($select,"select");
+    		$calls ->request($desc,"desc");
+    		yield $calls;
+    }
+
+```
+
 #### Concect to mysql async 
 
 ```php
