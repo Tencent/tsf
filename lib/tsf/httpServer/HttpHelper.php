@@ -29,8 +29,8 @@ class HttpHelper {
        // $appRoute = HttpRoute::urlrouter_rewrite($uri,$method);
        // explode 解析类似于  controller/action类型的url
         $mvcArr=explode('/',$uri);
-        $appRoute['controller']=$mvcArr[0];
-        $appRoute['action']=$mvcArr[1];
+        $appRoute['controller']=$mvcArr[1];
+        $appRoute['action']=$mvcArr[2];
 
         SysLog::info(__METHOD__.print_r($appRoute,true),__CLASS__);
         if(!$appRoute){
