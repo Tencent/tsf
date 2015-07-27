@@ -3,18 +3,18 @@
 namespace Swoole\Client;
 
 /**
- * Class DB
- * @package Swoole\Client
+ * Class MySQL
+ * @package Swoole\Async
  */
 class DB extends Base{
-    protected $pool;
+    private $pool;
     protected $db;
     protected $sql;
     protected $key;
     protected $callback;
     protected $calltime;
     
-    public function __construct($sql=""){
+    public function __construct($sql){
     	$this->pool = Db_pool::getInstance();
     	$this->sql = $sql;
     }
@@ -40,45 +40,77 @@ class DB extends Base{
     	return $this ->key;
     }
 
+    /**
+     * @param $db_sock
+     * @return bool
+     */
+    public function onSQLReady($db_sock)
+    {
+        $task = empty($this->pool->work_pool[$db_sock]) ? null : $this->pool->work_pool[$db_sock];
+        if (empty($task)) {
+            echo "MySQLi Warning: Maybe SQLReady receive a Close event , such as Mysql server close the socket !\n";
+            $this->pool->removeConnection($db_sock);
+            return false;
+        }
+		
+        /**
+         * @var \mysqli $mysqli
+         */
+        $mysqli = $task['mysql']['object'];
+        $callback = $task['callback'];
 
+        if ($result = $mysqli->reap_async_query()) {
+        	$this ->calltime = $this ->calltime - microtime(true);
+        	call_user_func_array($this ->callback, array('r' => 0, 'key' => $this->key, 'calltime' => $this ->calltime, 'data' => $result ->fetch_all()));
+            if (is_object($result)) {
+                mysqli_free_result($result);
+            }
+        } else {
+        	$this ->calltime = $this ->calltime - microtime(true);
+        	call_user_func_array($this ->callback, array('r' => 1, 'key' => $this->key, 'calltime' => $this ->calltime, 'data' =>"error" ));
+            echo "MySQLi Error: " . mysqli_error($mysqli)."\n";
+        }
+        
+
+        //release mysqli object
+        $this->pool->idle_pool[$task['mysql']['socket']] = $task['mysql'];
+        unset($this->pool->work_pool[$db_sock]);
+
+        //fetch a request from wait queue.
+        if (count($this->pool->wait_queue) > 0) {
+            $idle_n = count($this->pool->idle_pool);
+            for ($i = 0; $i < $idle_n; $i++) {
+                $new_task = array_shift($this->pool->wait_queue);
+                $this->doQuery($new_task['sql'], $new_task['callback']);
+            }
+        }
+    }
     
     public function send(callable $callback){
     	$this->callback = $callback;
-    	$this->ready_query();
-    }
-
-
-    public function query($sql){
-        $this->sql = $sql;
-        return $this;
+    	$this->query();
     }
 
     /**
      * @param string $sql
      * @param callable $callback
      */
-    public function ready_query()
+    public function query()
     {
         //no idle connection
-        if(!empty($sql)){
-            $this->sql = $sql;
-        }
-
+    	
         if (count($this->pool->idle_pool) == 0) {
             if ($this->pool->connection_num < $this->pool->pool_size) {
                 $this->pool->createConnection(array($this,"onSQLReady"));
-                $this->doQuery();
+                $this->doQuery($this->callback);
             } else {
                 $this->pool->wait_queue[] = array(
                     'sql'  => $this->sql,
                     'callback' => $this->callback,
-                    'calltime'=>$this->calltime,
-                    'key'=>$this->key,
-                    'object'=>$this,
                 );
             }
         } else {
-            $this->doQuery();
+            $this->doQuery($this->callback);
         }
     }
 
@@ -86,10 +118,8 @@ class DB extends Base{
      * @param string $sql
      * @param callable $callback
      */
-    public function doQuery()
+    protected function doQuery(callable $callback)
     {
-
-
         //remove from idle pool
         $db = array_pop($this->pool->idle_pool);
 		
@@ -111,10 +141,7 @@ class DB extends Base{
                     $this->connection_num --;
                     $this->wait_queue[] = array(
                         'sql'  => $this->sql,
-                        'callback' => $this->callback,
-                        'calltime'=>$this->calltime,
-                        'key'=>$this->key,
-                        'object'=>$this,
+                        'callback' => $callback,
                     );
                 }
             }
@@ -122,17 +149,11 @@ class DB extends Base{
         }
 
         $task['sql'] = $this->sql;
-        $task['callback'] = $this->callback;
+        $task['callback'] = $callback;
         $task['mysql'] = $db;
-        $task['calltime'] = $this->calltime;
-        $task['key'] = $this->key;
 
         //join to work pool
         $this->pool->work_pool[$db['socket']] = $task;
-
-        echo "idle pool:".count($this->pool->idle_pool)."\n";
-        echo "work pool:".count($this->pool->work_pool)."\n";
-        echo "wait queue:".count($this->pool->wait_queue)."\n";
     }
 }
 
@@ -178,21 +199,19 @@ class Db_pool{
 	 * @param int $pool_size
 	 * @throws \Exception
 	*/
-	public static $_instance=null;
+	public static $_instance;
 	
-	protected function __construct(){
+	public function __construct(){
 		 
 		$config = \UserConfig::getConfig("db");
 		if (empty($config['host']) ||
 			empty($config['database']) ||
 			empty($config['user']) 
 		) {
-            echo "require host, database, user, password config";
-			//throw new \Exception("require host, database, user, password config.");
+			throw new \Exception("require host, database, user, password config.");
 		}
 		if (!function_exists('swoole_get_mysqli_sock')) {
-            echo "require swoole_get_mysqli_sock function.";
-			//throw new \Exception("require swoole_get_mysqli_sock function.");
+			throw new \Exception("require swoole_get_mysqli_sock function.");
 		}
 		
 		if (empty($config['port'])) {
@@ -204,7 +223,7 @@ class Db_pool{
 	}
 	
 	public static function getInstance(){
-		if(self::$_instance===null){
+		if(!self::$_instance){
 			self::$_instance = new self();
 		}
 		return self::$_instance;
@@ -213,7 +232,7 @@ class Db_pool{
 	/**
 	 * create mysql connection
 	 */
-	public function createConnection()
+	public function createConnection(callable $callback)
 	{
 		
 		$config = $this->config;
@@ -224,7 +243,7 @@ class Db_pool{
 		}
 		$db_sock = swoole_get_mysqli_sock($db);
 		
-		swoole_event_add($db_sock, array($this,"onSQLReady"));
+		swoole_event_add($db_sock, $callback);
 		$this->idle_pool[$db_sock] = array(
 			'object' => $db,
 			'socket' => $db_sock,
@@ -243,53 +262,4 @@ class Db_pool{
 		unset($this->idle_pool[$db_sock]);
 		$this->connection_num --;
 	}
-
-    /**
-     * @param $db_sock
-     * @return bool
-     */
-    public function onSQLReady($db_sock)
-    {
-        $task = empty($this->work_pool[$db_sock]) ? null : $this->work_pool[$db_sock];
-        if (empty($task)) {
-            echo "MySQLi Warning: Maybe SQLReady receive a Close event , such as Mysql server close the socket !\n";
-            $this->removeConnection($db_sock);
-            return false;
-        }
-
-        /**
-         * @var \mysqli $mysqli
-         */
-        $mysqli = $task['mysql']['object'];
-        $callback = $task['callback'];
-        $calltime = $task['calltime'];
-        $key  = $task['key'];
-
-        if ($result = $mysqli->reap_async_query()) {
-            $calltime = $calltime - microtime(true);
-            call_user_func_array($callback, array('r' => 0, 'key' => $key, 'calltime' => $calltime, 'data' => $result ->fetch_all(MYSQLI_ASSOC)));
-            if (is_object($result)) {
-                mysqli_free_result($result);
-            }
-        } else {
-            $calltime = $calltime - microtime(true);
-            call_user_func_array($callback, array('r' => 1, 'key' => $key, 'calltime' => $calltime, 'data' =>"error" ));
-            echo "MySQLi Error: " . mysqli_error($mysqli)."\n";
-        }
-
-
-        //release mysqli object
-        $this->idle_pool[$task['mysql']['socket']] = $task['mysql'];
-        unset($this->work_pool[$db_sock]);
-
-
-        //fetch a request from wait queue.
-        if (count($this->wait_queue) > 0) {
-            $idle_n = count($this->idle_pool);
-            for ($i = 0; $i < $idle_n; $i++) {
-                $new_task = array_shift($this->wait_queue);
-                $new_task['object']->doQuery($new_task['callback']);
-            }
-        }
-    }
 }
