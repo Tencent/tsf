@@ -6,11 +6,17 @@ namespace Swoole\Client;
  * Class MySQL
  * @package Swoole\Async
  */
-class MySQL extends Base{
+class DB extends Base{
     private $pool;
+    protected $db;
+    protected $sql;
+    protected $key;
+    protected $callback;
+    protected $calltime;
     
     public function __construct($sql){
     	$this->pool = Db_pool::getInstance();
+    	$this->sql = $sql;
     }
     
     /**
@@ -20,7 +26,7 @@ class MySQL extends Base{
      */
     public function setKey($key=NULL){
     	if(empty($key)){
-    		$this ->key = md5($this->url . microtime(true) . rand(0,10000));
+    		$this ->key = md5($this->sql . microtime(true) . rand(0,10000));
     	}else{
     		$this ->key = $key;
     	}
@@ -40,13 +46,13 @@ class MySQL extends Base{
      */
     public function onSQLReady($db_sock)
     {
-        $task = empty($this->work_pool[$db_sock]) ? null : $this->work_pool[$db_sock];
+        $task = empty($this->pool->work_pool[$db_sock]) ? null : $this->pool->work_pool[$db_sock];
         if (empty($task)) {
             echo "MySQLi Warning: Maybe SQLReady receive a Close event , such as Mysql server close the socket !\n";
-            $this->removeConnection($db_sock);
+            $this->pool->removeConnection($db_sock);
             return false;
         }
-
+		
         /**
          * @var \mysqli $mysqli
          */
@@ -54,52 +60,58 @@ class MySQL extends Base{
         $callback = $task['callback'];
 
         if ($result = $mysqli->reap_async_query()) {
-            call_user_func($callback, $mysqli, $result);
+        	var_dump($result);
+        	$this ->calltime = $this ->calltime - microtime(true);
+        	call_user_func_array($this ->callback, array('r' => 0, 'key' => $this->key, 'calltime' => $this ->calltime, 'data' => $result ->fetch_all()));
             if (is_object($result)) {
                 mysqli_free_result($result);
             }
         } else {
-            call_user_func($callback, $mysqli, $result);
+        	$this ->calltime = $this ->calltime - microtime(true);
+        	call_user_func_array($this ->callback, array('r' => 1, 'key' => $this->key, 'calltime' => $this ->calltime, 'data' =>"error" ));
             echo "MySQLi Error: " . mysqli_error($mysqli)."\n";
         }
+        
 
         //release mysqli object
-        $this->idle_pool[$task['mysql']['socket']] = $task['mysql'];
-        unset($this->work_pool[$db_sock]);
+        $this->pool->idle_pool[$task['mysql']['socket']] = $task['mysql'];
+        unset($this->pool->work_pool[$db_sock]);
 
         //fetch a request from wait queue.
-        if (count($this->wait_queue) > 0) {
-            $idle_n = count($this->idle_pool);
+        if (count($this->pool->wait_queue) > 0) {
+            $idle_n = count($this->pool->idle_pool);
             for ($i = 0; $i < $idle_n; $i++) {
-                $new_task = array_shift($this->wait_queue);
+                $new_task = array_shift($this->pool->wait_queue);
                 $this->doQuery($new_task['sql'], $new_task['callback']);
             }
         }
     }
     
     public function send(callable $callback){
-    	$this->doQuery($callback);
+    	$this->callback = $callback;
+    	$this->query();
     }
 
     /**
      * @param string $sql
      * @param callable $callback
      */
-    public function query($sql, callable $callback)
+    public function query()
     {
         //no idle connection
-        if (count($this->idle_pool) == 0) {
-            if ($this->connection_num < $this->pool_size) {
-                $this->createConnection();
-                $this->doQuery($sql, $callback);
+    	
+        if (count($this->pool->idle_pool) == 0) {
+            if ($this->pool->connection_num < $this->pool->pool_size) {
+                $this->pool->createConnection(array($this,"onSQLReady"));
+                $this->doQuery($this->callback);
             } else {
-                $this->wait_queue[] = array(
-                    'sql'  => $sql,
-                    'callback' => $callback,
+                $this->pool->wait_queue[] = array(
+                    'sql'  => $this->sql,
+                    'callback' => $this->callback,
                 );
             }
         } else {
-            $this->doQuery($sql, $callback);
+            $this->doQuery($this->callback);
         }
     }
 
@@ -107,18 +119,17 @@ class MySQL extends Base{
      * @param string $sql
      * @param callable $callback
      */
-    protected function doQuery($sql, callable $callback)
+    protected function doQuery(callable $callback)
     {
         //remove from idle pool
-        $db = array_pop($this->idle_pool);
-
+        $db = array_pop($this->pool->idle_pool);
+		
         /**
          * @var \mysqli $mysqli
          */
         $mysqli = $db['object'];
-
         for ($i = 0; $i < 2; $i++) {
-            $result = $mysqli->query($sql, MYSQLI_ASYNC);
+            $result = $mysqli->query($this->sql, MYSQLI_ASYNC);
             if ($result === false) {
                 if ($mysqli->errno == 2013 or $mysqli->errno == 2006) {
                     $mysqli->close();
@@ -130,7 +141,7 @@ class MySQL extends Base{
                     echo "server exception. \n";
                     $this->connection_num --;
                     $this->wait_queue[] = array(
-                        'sql'  => $sql,
+                        'sql'  => $this->sql,
                         'callback' => $callback,
                     );
                 }
@@ -138,12 +149,12 @@ class MySQL extends Base{
             break;
         }
 
-        $task['sql'] = $sql;
+        $task['sql'] = $this->sql;
         $task['callback'] = $callback;
         $task['mysql'] = $db;
 
         //join to work pool
-        $this->work_pool[$db['socket']] = $task;
+        $this->pool->work_pool[$db['socket']] = $task;
     }
 }
 
@@ -152,37 +163,37 @@ class Db_pool{
 	 * max connections for mysql client
 	 * @var int $pool_size
 	 */
-	protected $pool_size;
+	public $pool_size;
 	
 	/**
 	 * number of current connection
 	 * @var int $connection_num
 	 */
-	protected $connection_num;
+	public $connection_num;
 	
 	/**
 	 * idle connection
 	 * @var array $idle_pool
 	 */
-	protected $idle_pool = array();
+	public $idle_pool = array();
 	
 	/**
 	 * work connetion
 	 * @var array $work_pool
 	*/
-	protected $work_pool = array();
+	public $work_pool = array();
 	
 	/**
 	 * database configuration
 	 * @var array $config
 	*/
-	protected $config = array();
+	public $config = array();
 	
 	/**
 	 * wait connection
 	 * @var array
 	*/
-	protected $wait_queue = array();
+	public $wait_queue = array();
 	
 	/**
 	 * @param array $config
@@ -194,19 +205,16 @@ class Db_pool{
 	public function __construct(){
 		 
 		$config = \UserConfig::getConfig("db");
-		 
 		if (empty($config['host']) ||
 			empty($config['database']) ||
-			empty($config['user']) ||
-			empty($config['password'])
+			empty($config['user']) 
 		) {
 			throw new \Exception("require host, database, user, password config.");
 		}
-	
 		if (!function_exists('swoole_get_mysqli_sock')) {
 			throw new \Exception("require swoole_get_mysqli_sock function.");
 		}
-	
+		
 		if (empty($config['port'])) {
 			$config['port'] = 3306;
 		}
@@ -215,7 +223,7 @@ class Db_pool{
 		$this->pool_size = $config['pool'];
 	}
 	
-	public static function &getInstance(){
+	public static function getInstance(){
 		if(!self::$_instance){
 			self::$_instance = new self();
 		}
@@ -225,8 +233,9 @@ class Db_pool{
 	/**
 	 * create mysql connection
 	 */
-	protected function createConnection(callable $callback)
+	public function createConnection(callable $callback)
 	{
+		
 		$config = $this->config;
 		$db = new \mysqli;
 		$db->connect($config['host'], $config['user'], $config['password'], $config['database'], $config['port']);
@@ -234,6 +243,7 @@ class Db_pool{
 			$db->set_charset($config['charset']);
 		}
 		$db_sock = swoole_get_mysqli_sock($db);
+		
 		swoole_event_add($db_sock, $callback);
 		$this->idle_pool[$db_sock] = array(
 			'object' => $db,
@@ -246,7 +256,7 @@ class Db_pool{
 	 * remove mysql connection
 	 * @param $db_sock
 	 */
-	protected function removeConnection($db_sock)
+	public function removeConnection($db_sock)
 	{
 		swoole_event_del($db_sock);
 		$this->idle_pool[$db_sock]['object'] -> close();
