@@ -54,7 +54,6 @@ class TestModel {
 
 
 	public function HttpmuticallTest(){
-	  
 	      $calls=new Swoole\Client\Multi();
 	      $qq = new Swoole\Client\HTTP("http://www.qq.com/");
 	      $oschina = new Swoole\Client\HTTP("http://www.oschina.net/");
@@ -63,15 +62,21 @@ class TestModel {
 	      yield $calls;
 	}
 	
-	
+	//db pool muticall test
 	public function MysqlMuticallTest(){
 		$calls=new Swoole\Client\Multi();
-		$test = new Swoole\Client\DB("select * from test");
-		$test2 = new Swoole\Client\DB("desc test");
-		$calls ->request($test,"test");
-		$calls ->request($test2,"desc");
+		$select = new Swoole\Client\DB("select * from test");
+		$desc = new Swoole\Client\DB("desc test");
+		$calls ->request($select,"select");
+		$calls ->request($desc,"desc");
 		yield $calls;
 	}
+
+    //db pool  test
+    public function Dbtest(){
+        $db = new Swoole\Client\DB();
+        yield $db->query("select * from test");
+    }
 	
 	
 
