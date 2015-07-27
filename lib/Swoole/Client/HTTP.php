@@ -226,7 +226,7 @@ class HTTP extends Base {
 
 		//设置请求headers信息
 		if (!empty($headers)) {
-			$this ->requestHeaders = $this ->setRequestHeaders($headers);
+			$this ->setRequestHeaders($headers);
 		}
 
 		$this ->buildRequest();
@@ -243,7 +243,8 @@ class HTTP extends Base {
 	 */
 	public function post($path, $data, $headers){
 
-		$this ->method = 'POST';
+        $this ->method = 'POST';
+        $this ->path = $path;
         $this ->setRequestHeaders($headers);
 
         $this ->buildQuery($data);
