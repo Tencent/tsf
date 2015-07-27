@@ -25,8 +25,13 @@ class HttpHelper {
 
         $method = $req -> server['request_method'];
         $uri = $req -> server['request_uri'];
-        //路由
-        $appRoute = HttpRoute::urlrouter_rewrite($uri,$method);
+        //正则匹配的路由 支持restful 提供给深度用户使用
+       // $appRoute = HttpRoute::urlrouter_rewrite($uri,$method);
+       // explode 解析类似于  controller/action类型的url
+        $mvcArr=explode('/',$uri);
+        $appRoute['controller']=$mvcArr[0];
+        $appRoute['action']=$mvcArr[1];
+
         SysLog::info(__METHOD__.print_r($appRoute,true),__CLASS__);
         if(!$appRoute){
             return array('r' => self::HTTP_ERROR_URI);
