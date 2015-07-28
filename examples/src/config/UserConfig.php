@@ -26,6 +26,15 @@
          'router'=>array('info'=>1,'error'=>1), //支持自定义route 传递一个函数  1111111？
          'preFilter'=>array('info'=>1,'error'=>1), //fliter之前做的事情 传递一个函数？
          'postFilter'=>array('info'=>1,'error'=>1), //fliter之后做的事情 传递一个函数？
+         'db' => array(
+         	"host"=>"127.0.0.1",
+         	"database"=>"test",
+         	"user"=>"root",
+         	"password"=>"",
+         	"port"=>3306,
+         	"charset"=>"",
+         	"pool"=>100                 //连接池最大值
+         )
      );
 
      public static function getConfig($val) {

@@ -126,6 +126,9 @@ if(CheckProcessExist() ){ //如果存在 说明已经运行了 则通过unixsock
     if ($cmd == 'start')
     {
         $indexConf=getServerIni($name);
+        
+        $indexConf['conf']['setting']['watch_ext'] = explode(",", $indexConf['conf']['setting']['watch_ext']);
+        
         if($indexConf['r']!=0){ //
             echo "get server $name conf error".PHP_EOL;
             exit;
@@ -151,7 +154,7 @@ if(CheckProcessExist() ){ //如果存在 说明已经运行了 则通过unixsock
         //开启unixsock 监听模式
         //$RunningServer[$name]=$name;
         //修改，添加参数 包括php启动路径和名字
-        $RunningServer[$name]=array('php'=>$phpStart,'name'=>$name);
+    	$RunningServer[$name]=array('php'=>$phpStart,'name'=>$name,"conf"=>$indexConf['conf'],"hash"=>array(),"reload"=>false,"first_start"=>true);
         StartServSock($RunningServer);
     };
 
@@ -164,15 +167,20 @@ if(CheckProcessExist() ){ //如果存在 说明已经运行了 则通过unixsock
         foreach($configArr as $k => $v)
         {
             $name=basename($v, '.ini');
-            $config = parse_ini_file(STARTBASEPATH . "/conf/".$name.".ini", true);
-            $phpStart=$config['server']['php'];
+            $config = getServerIni($name);
+            
+            $config['conf']['setting']['watch_ext'] = explode(",", $config['conf']['setting']['watch_ext']);
+            
+            $phpStart=$config['conf']['server']['php'];
             if(empty($phpStart)){
                 echo " $name phpstartpath $phpStart not exist ".PHP_EOL;
                 continue;
             };
+            
             $servArr['name']=$config;
+            
             if(StartServ($phpStart,'start',$name)){
-                $RunningServer[$name]=array('php'=>$phpStart,'name'=>$name);
+                $RunningServer[$name]=array('php'=>$phpStart,'name'=>$name,"conf"=>$config['conf'],"hash"=>array(),"reload"=>false,"first_start"=>true);
                 echo $phpStart.' '.$name." start \033[32;40m [SUCCESS] \033[0m".PHP_EOL;
             }else{
                 echo " startall  \033[31;40m [FAIL] \033[0m".PHP_EOL;
@@ -194,6 +202,7 @@ function StartServSock($RunServer)
     cli_set_process_title(SuperProcessName);
     //这边其实也是也是demon进程
     $serv = new swoole_server(uniSockPath, 0, SWOOLE_BASE, SWOOLE_UNIX_STREAM);
+
     //维持一个动态数组 实现动态监控server 包含了php的启动路径和停止路径 array('php'=>,'name'=)
     $serv->runServer=$RunServer;
     $serv->set(array(
@@ -203,6 +212,12 @@ function StartServSock($RunServer)
     $serv->on('WorkerStart', function ($serv, $workerId) {
         //监控周期
         $serv->addtimer(1000);
+    //自我监控重载
+        foreach ($serv->runServer as &$server) {
+            if($server['conf']['setting']['watchdog']==1){
+                $serv->addtimer(500);
+            }
+        }
 
     });
     //定时器中操作 主要为轮巡 启动服务
@@ -212,18 +227,34 @@ function StartServSock($RunServer)
             StartLogTimer(__LINE__.' '.'no server is running '.PHP_EOL);
             return;
         };
-        foreach($serv->runServer as $serverName){
-            $ret=system("ps aux | grep ".$serverName['name']." | grep master | grep -v grep ");
-            StartLogTimer(__LINE__.' cmd is '."ps aux | grep ".$serverName['name']." | grep master | grep -v grep ".print_r($ret,true));
-            if(empty($ret)){//挂了 什么都没有  之后可能要通过数量来获取
-                //todo
-                StartServ($serverName['php'],'start',$serverName['name']);
-                StartLogTimer(__LINE__.date('Y-m-d H:i:s').'  '.print_r($serverName,true).' server is dead , start to restart'.PHP_EOL);
 
-            }else{
-                StartLogTimer(__LINE__.date('Y-m-d H:i:s').'  '.print_r($serverName,true).' server is running success'.PHP_EOL);
+    if($interval==500){
+            foreach ($serv->runServer as &$server) {
+                $path = pathinfo($server['conf']['server']['root']);
+                server_auto_reload($path['dirname'],$server);
+        		$server['first_start'] = false;
+                if($server['reload']){
+                    $server['reload'] = false;
+                    StartServ($server['php'],'reload',$server['name']);
+                    StartLogTimer(__LINE__.' '.'server auto reload '.PHP_EOL);
+                }
+            }
+
+        }else{
+            foreach($serv->runServer as $serverName){
+                $ret=system("ps aux | grep ".$serverName['name']." | grep master | grep -v grep ");
+                StartLogTimer(__LINE__.' cmd is '."ps aux | grep ".$serverName['name']." | grep master | grep -v grep ".print_r($ret,true));
+                if(empty($ret)){//挂了 什么都没有  之后可能要通过数量来获取
+                    //todo
+                    StartServ($serverName['php'],'start',$serverName['name']);
+                    StartLogTimer(__LINE__.date('Y-m-d H:i:s').'  '.print_r($serverName,true).' server is dead , start to restart'.PHP_EOL);
+
+                }else{
+                    StartLogTimer(__LINE__.date('Y-m-d H:i:s').'  '.print_r($serverName,true).' server is running success'.PHP_EOL);
+                }
             }
         }
+    
     });
 
     $serv->on('connect', function ($serv, $fd, $from_id) {
@@ -387,4 +418,30 @@ function printInfo(){
     echo "if you want to know server list that you can start please input :  php swoole.php list".PHP_EOL;
     echo "if you want to start all your servers please input :  php swoole.php startall".PHP_EOL;
     exit;
+}
+
+function server_auto_reload($path,&$server) {
+
+    if(is_dir($path)){
+        $dp = dir($path);
+        while ($file = $dp ->read()){
+            if($file !="." && $file !=".."){
+                server_auto_reload($path."/".$file, $server);
+            }
+        }
+        $dp ->close();
+    }
+    if(is_file($path)){
+        $file_info = pathinfo($path);
+        if(in_array($file_info['extension'], $server['conf']['setting']['watch_ext'])){
+            $hash = md5($path);
+            $file_hash = md5_file($path);
+            if(empty($server['hash'][$hash])||$server['hash'][$hash]!=$file_hash){
+                $server['hash'][$hash]= $file_hash;
+        		if(!$server['first_start']){
+                    $server['reload'] =true;
+        		}
+            }
+        }
+    }
 }

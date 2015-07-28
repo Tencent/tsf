@@ -14,14 +14,25 @@ class TestController extends Controller{
 		$response = $this ->argv['response'];
 		$res =(yield $this ->test());
 		SysLog::debug(__METHOD__ ." res  == ".print_r($res, true), __CLASS__);
-		$response ->end(" test response ");
+		$response ->end(" test response 16".print_r($res, true));
 		yield Swoole\Coroutine\SysCall::end('test for syscall end');
 	}
 	
+	
+	public function yieldTest(){
+		$str = "1;test;hahhha,2;test2;heihei";
+		foreach (explode(",", $str) as $line){
+			$fileds = explode(";", $line);
+			$id = array_shift($fileds);
+			yield $id=>$fileds;
+		}
+	}
+	
 	private function test(){
+		
 
 		$test  = new TestModel();
-		$res = (yield $test ->udpTest());
+		$res = (yield $test ->MysqlMuticallTest());
 		SysLog::info(__METHOD__ . " res == " .print_r($res, true), __CLASS__);
 		if ($res['r'] == 0) {
 
