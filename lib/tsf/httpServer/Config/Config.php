@@ -7,10 +7,8 @@
  */
 
 
-
-
 return array(
-    'Rewrite'=>array(
+    'Rewrite' => array(
 
         array(
             'regx' => '^/(<controller>\w+)$',  //默认到index
@@ -52,7 +50,7 @@ return array(
             'regx' => '^/rest/(<controller>\w+)$',
             'mvc' => 'Controller/List',
             'verb' => 'GET',
-            'default' => array('ggg'=>33333),
+            'default' => array('ggg' => 33333),
         ),
         array(
             'regx' => '^/rest/(<controller>\w+)/(<id>\d+)$',
@@ -79,7 +77,7 @@ return array(
             'default' => array(),  //添加默认参数
         ),
         array(
-            'regx' =>  '^/rest/(<controller>\w+)$',
+            'regx' => '^/rest/(<controller>\w+)$',
             'mvc' => 'Controller/Create',  //必须匹配
             'verb' => 'POST',  //必须匹配 方法
             'default' => array(),  //添加默认参数
@@ -91,7 +89,7 @@ return array(
             'default' => array(),  //添加默认参数
         ),
         array(
-            'regx' =>  '^/rest/(<controller>\w+)$',
+            'regx' => '^/rest/(<controller>\w+)$',
             'mvc' => 'Controller/Delete',  //必须匹配
             'verb' => 'DELETE',  //必须匹配 方法
             'default' => array(),  //添加默认参数
@@ -107,8 +105,6 @@ return array(
             'default' => array(),  //添加默认参数
         ),
     )
-
-
 
 
 );

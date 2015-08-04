@@ -26,11 +26,11 @@ abstract class Server implements Server\Driver
     private $preSysCmd = '%+-swoole%+-';
     private $requireFile = '';
 
-   // public $serverClass;  //修改为public ---mark  20150620
+    // public $serverClass;  //修改为public ---mark  20150620
     public $protocol;  //修改为public ---mark  20150620
 
-	function __construct()
-	{
+    function __construct()
+    {
         // Initialization server startup parameters
         $this->setting = array_merge(array(
             'worker_num' => 8,                      // worker process num
@@ -40,16 +40,16 @@ abstract class Server implements Server\Driver
 
         $this->setHost();
         $this->init();
-	}
+    }
 
-    public function init() {
+    public function init()
+    {
 
     }
 
     public function setRequire($file)
     {
-        if (! file_exists($file))
-        {
+        if (!file_exists($file)) {
             throw new \Exception("[error] require file :$file is not exists");
         }
         $this->requireFile = $file;
@@ -64,17 +64,14 @@ abstract class Server implements Server\Driver
 
     public function loadConfig($config = array())
     {
-        if (is_string($config))
-        {   // $config is file path?
-            if (! file_exists($config))
-            {
+        if (is_string($config)) {   // $config is file path?
+            if (!file_exists($config)) {
                 throw new \Exception("[error] profiles [$config] can not be loaded");
             }
             // Load the configuration file into an array
             $config = parse_ini_file($config, true);
         }
-        if (is_array($config))
-        {
+        if (is_array($config)) {
             $this->config = array_merge($this->config, $config);
         }
         return true;
@@ -85,20 +82,18 @@ abstract class Server implements Server\Driver
         $mainSetting = $this->config['server'] ? $this->config['server'] : array();
         $runSetting = $this->config['setting'] ? $this->config['setting'] : array();
         //$this->processName = $mainSetting['server_name'] ? $mainSetting['server_name'] : 'swoole_server'; //todo
-        $this->masterPidFile =  $this->runPath . '/' . $this->processName . '.master.pid';
+        $this->masterPidFile = $this->runPath . '/' . $this->processName . '.master.pid';
         $this->managerPidFile = $this->runPath . '/' . $this->processName . '.manager.pid';
         $this->setting = array_merge($this->setting, $runSetting);
-   //     $this->serverClass = $mainSetting['server_name'] ? $mainSetting['server_name'] : 'swoole_server'; //todo
+        //     $this->serverClass = $mainSetting['server_name'] ? $mainSetting['server_name'] : 'swoole_server'; //todo
 
         // trans listener
-        if ($mainSetting['listen'])
-        {
+        if ($mainSetting['listen']) {
             $this->transListener($mainSetting['listen']);
         }
 
         // set user
-        if (isset($mainSetting['user']))
-        {
+        if (isset($mainSetting['user'])) {
             $this->user = $mainSetting['user'];
         }
 
@@ -109,7 +104,8 @@ abstract class Server implements Server\Driver
         }
     }
 
-    private function initServer() {
+    private function initServer()
+    {
         // Creating a swoole server resource object
         $swooleServerName = $this->enableHttp ? '\swoole_http_server' : '\swoole_server';
         $this->sw = new $swooleServerName($this->host, $this->port, $this->mode, $this->sockType);
@@ -120,7 +116,7 @@ abstract class Server implements Server\Driver
         $this->setting['dispatch_mode'] = intval($this->setting['dispatch_mode']);
         $this->setting['daemonize'] = intval($this->setting['daemonize']);
 
-       // $this->sw = new \swoole_http_server($this->host, $this->port, $this->mode, $this->sockType);
+        // $this->sw = new \swoole_http_server($this->host, $this->port, $this->mode, $this->sockType);
         // Setting the runtime parameters
         $this->sw->set($this->setting);
 
@@ -132,7 +128,7 @@ abstract class Server implements Server\Driver
         $this->sw->on('Receive', array($this, 'onReceive'));
         $this->sw->on('Close', array($this, 'onClose'));
         $this->sw->on('WorkerStop', array($this, 'onWorkerStop'));
-        $this->sw->on('timer',array($this, 'onTimer'));
+        $this->sw->on('timer', array($this, 'onTimer'));
         if ($this->enableHttp) {
             $this->sw->on('Request', array($this, 'onRequest'));
         }
@@ -142,12 +138,9 @@ abstract class Server implements Server\Driver
         }
 
         // add listener
-        if (is_array($this->listen))
-        {
-            foreach($this->listen as $v)
-            {
-                if (! $v['host'] || ! $v['port'])
-                {
+        if (is_array($this->listen)) {
+            foreach ($this->listen as $v) {
+                if (!$v['host'] || !$v['port']) {
                     continue;
                 }
                 $this->sw->addlistener($v['host'], $v['port'], $this->sockType);
@@ -157,8 +150,7 @@ abstract class Server implements Server\Driver
 
     private function transListener($listen)
     {
-        if(! is_array($listen))
-        {
+        if (!is_array($listen)) {
             $tmpArr = explode(":", $listen);
             $host = isset($tmpArr[1]) ? $tmpArr[0] : $this->host;
             $port = isset($tmpArr[1]) ? $tmpArr[1] : $tmpArr[0];
@@ -169,8 +161,7 @@ abstract class Server implements Server\Driver
             );
             return true;
         }
-        foreach($listen as $v)
-        {
+        foreach ($listen as $v) {
             $this->transListener($v);
         }
     }
@@ -180,8 +171,7 @@ abstract class Server implements Server\Driver
         Console::setProcessName($this->processName . ': master process');
         file_put_contents($this->masterPidFile, $server->master_pid);
         file_put_contents($this->managerPidFile, $server->manager_pid);
-        if ($this->user)
-        {
+        if ($this->user) {
             Console::changeUser($this->user);
         }
     }
@@ -190,8 +180,7 @@ abstract class Server implements Server\Driver
     {
         // rename manager process
         Console::setProcessName($this->processName . ': manager process');
-        if ($this->user)
-        {
+        if ($this->user) {
             Console::changeUser($this->user);
         }
     }
@@ -200,25 +189,20 @@ abstract class Server implements Server\Driver
     {
         // echo __METHOD__;
         // exit();
-        if($workerId >= $this->setting['worker_num'])
-        {
-            Console::setProcessName($this->processName  . ': task worker process');
-        }
-        else
-        {
-            Console::setProcessName($this->processName  . ': event worker process');
+        if ($workerId >= $this->setting['worker_num']) {
+            Console::setProcessName($this->processName . ': task worker process');
+        } else {
+            Console::setProcessName($this->processName . ': event worker process');
         }
 
-        if ($this->user)
-        {
+        if ($this->user) {
             Console::changeUser($this->user);
         }
-        $protocol=(require_once $this->requireFile);//执行
+        $protocol = (require_once $this->requireFile);//执行
 
         $this->setProtocol($protocol);
         // check protocol class
-        if (! $this->protocol)
-        {
+        if (!$this->protocol) {
             throw new \Exception("[error] the protocol class  is empty or undefined");
         }
 
@@ -256,56 +240,48 @@ abstract class Server implements Server\Driver
         $this->protocol->onTimer($server, $interval);
     }
 
-    public function onRequest($request, $response) {
-   /*
-            设定一个全局的协程调度对象
-         */
-	//$this ->log( " serve === " .print_r($this ->sw, true) . "\n");
-        $request ->scheduler = $this ->sw ->scheduler;
-	$this->protocol->onRequest($request, $response);
+    public function onRequest($request, $response)
+    {
+        /*
+                 设定一个全局的协程调度对象
+              */
+        //$this ->log( " serve === " .print_r($this ->sw, true) . "\n");
+        $request->scheduler = $this->sw->scheduler;
+        $this->protocol->onRequest($request, $response);
     }
 
     public function onReceive($server, $fd, $fromId, $data)
     {
-        if($data ==  $this->preSysCmd . "reload")
-        {
+        if ($data == $this->preSysCmd . "reload") {
             $ret = intval($server->reload());
             $server->send($fd, $ret);
-        }
-        elseif($data ==  $this->preSysCmd . "info")
-        {
+        } elseif ($data == $this->preSysCmd . "info") {
             $info = $server->connection_info($fd);
-            $server->send($fd, 'Info: '.var_export($info, true).PHP_EOL);
-        }
-        elseif($data ==  $this->preSysCmd . "stats")
-        {
+            $server->send($fd, 'Info: ' . var_export($info, true) . PHP_EOL);
+        } elseif ($data == $this->preSysCmd . "stats") {
             $serv_stats = $server->stats();
-            $server->send($fd, 'Stats: '.var_export($serv_stats, true).PHP_EOL);
-        }
-        elseif($data ==  $this->preSysCmd . "shutdown")
-        {
+            $server->send($fd, 'Stats: ' . var_export($serv_stats, true) . PHP_EOL);
+        } elseif ($data == $this->preSysCmd . "shutdown") {
             $server->shutdown();
+        } else {
+            $this->protocol->onReceive($server, $fd, $fromId, $data);
         }
-        else
-       {
-           $this->protocol->onReceive($server, $fd, $fromId, $data);
-       }
     }
 
-	public function setProtocol($protocol)
-	{
-        if(!($protocol instanceof \Swoole\Server\Protocol))
-        {
-             throw new \Exception("[error] The protocol is not instanceof \\Swoole\\Server\\Protocol");
+    public function setProtocol($protocol)
+    {
+        if (!($protocol instanceof \Swoole\Server\Protocol)) {
+            throw new \Exception("[error] The protocol is not instanceof \\Swoole\\Server\\Protocol");
         }
 //        self::$protocol=$protocol;
-  //      self::$protocol->server=$protocol;
-		$this->protocol = $protocol;
+        //      self::$protocol->server=$protocol;
+        $this->protocol = $protocol;
         $this->protocol->server = $this->sw;
-	}
+    }
 
-    public function run($setting = array()) {
-        echo __METHOD__.PHP_EOL;
+    public function run($setting = array())
+    {
+        echo __METHOD__ . PHP_EOL;
         $this->setting = array_merge($this->setting, $setting);
         $cmd = isset($_SERVER['argv'][1]) ? strtolower($_SERVER['argv'][1]) : 'help';
         $this->_initRunTime(); // 初始化server资源
@@ -354,13 +330,11 @@ abstract class Server implements Server\Driver
     protected function shutdown()
     {
         $masterId = $this->getMasterPid();
-        if (! $masterId) {
+        if (!$masterId) {
             $this->log("[warning] " . $this->processName . ": can not find master pid file");
             $this->log($this->processName . ": stop\033[31;40m [FAIL] \033[0m");
             return false;
-        }
-        elseif (! posix_kill($masterId, 15))
-        {
+        } elseif (!posix_kill($masterId, 15)) {
             $this->log("[warning] " . $this->processName . ": send signal to master failed");
             $this->log($this->processName . ": stop\033[31;40m [FAIL] \033[0m");
             return false;
@@ -375,12 +349,11 @@ abstract class Server implements Server\Driver
     protected function reload()
     {
         $managerId = $this->getManagerPid();
-        if (! $managerId) {
+        if (!$managerId) {
             $this->log("[warning] " . $this->processName . ": can not find manager pid file");
             $this->log($this->processName . ": reload\033[31;40m [FAIL] \033[0m");
             return false;
-        }
-        elseif (! posix_kill($managerId, 10))//USR1
+        } elseif (!posix_kill($managerId, 10))//USR1
         {
             $this->log("[warning] " . $this->processName . ": send signal to manager failed");
             $this->log($this->processName . ": stop\033[31;40m [FAIL] \033[0m");
@@ -395,7 +368,7 @@ abstract class Server implements Server\Driver
         $this->log("*****************************************************************");
         $this->log("Summary: ");
         $this->log("Swoole Version: " . SWOOLE_VERSION);
-        if (! $this->checkServerIsRunning()) {
+        if (!$this->checkServerIsRunning()) {
             $this->log($this->processName . ": is running \033[31;40m [FAIL] \033[0m");
             $this->log("*****************************************************************");
             return false;
@@ -406,7 +379,8 @@ abstract class Server implements Server\Driver
         $this->log("*****************************************************************");
     }
 
-    protected function getMasterPid() {
+    protected function getMasterPid()
+    {
         $pid = false;
         if (file_exists($this->masterPidFile)) {
             $pid = file_get_contents($this->masterPidFile);
@@ -414,7 +388,8 @@ abstract class Server implements Server\Driver
         return $pid;
     }
 
-    protected function getManagerPid() {
+    protected function getManagerPid()
+    {
         $pid = false;
         if (file_exists($this->managerPidFile)) {
             $pid = file_get_contents($this->managerPidFile);
@@ -422,12 +397,14 @@ abstract class Server implements Server\Driver
         return $pid;
     }
 
-    protected function checkServerIsRunning() {
+    protected function checkServerIsRunning()
+    {
         $pid = $this->getMasterPid();
         return $pid && $this->checkPidIsRunning($pid);
     }
 
-    protected function checkPidIsRunning($pid) {
+    protected function checkPidIsRunning($pid)
+    {
         return posix_kill($pid, 0);
     }
 
@@ -446,25 +423,21 @@ abstract class Server implements Server\Driver
         $this->setting['setting']['daemonize'] = 1;
     }
 
-    protected function setHost() {
+    protected function setHost()
+    {
         $ipList = swoole_get_local_ip();
-        if (isset($ipList['eth1']))
-        {
+        if (isset($ipList['eth1'])) {
             $this->host = $ipList['eth1'];
-        }
-        elseif(isset($ipList['eth0'])) {
+        } elseif (isset($ipList['eth0'])) {
             $this->host = $ipList['eth0'];
-        }
-        else
-        {
+        } else {
             $this->host = '0.0.0.0';
         }
     }
 
     public function log($msg)
     {
-        if ($this->sw->setting['log_file'] && file_exists($this->sw->setting['log_file']))
-        {
+        if ($this->sw->setting['log_file'] && file_exists($this->sw->setting['log_file'])) {
             error_log($msg . PHP_EOL, 3, $this->sw->setting['log_file']);
         }
         echo $msg . PHP_EOL;

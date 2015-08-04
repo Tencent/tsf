@@ -9,11 +9,13 @@ class Protocol
 {
     public $server;
 
-    function __construct() {
+    function __construct()
+    {
         $this->init();
     }
 
-    public function init() {
+    public function init()
+    {
 
     }
 
@@ -22,12 +24,14 @@ class Protocol
      * @param $msg
      * @param string $type
      */
-    public function log($msg) {
+    public function log($msg)
+    {
         $log = "[" . date("Y-m-d G:i:s") . " " . floor(microtime() * 1000) . "]" . $msg;
         echo $log, NL;
     }
 
-    public function setServer($server) {
+    public function setServer($server)
+    {
         $this->server = $server;
     }
 }

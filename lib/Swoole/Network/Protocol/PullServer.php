@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Created by JetBrains PhpStorm.
  * User: jimmyszhou
@@ -17,83 +18,103 @@ class PullServer extends Swoole\Network\Protocol implements Swoole\Server\Protoc
      * @param $conf = array('projectName' => array('timeInterval' => 100,
      *                                             'res' => $obj))
      */
-    public function __construct($conf){
-        if(is_array($conf)){
-            foreach($conf as $k => $v){
-                $this -> timeJobs[(int)$v['timeInterval']] = $v['res'];
+    public function __construct($conf)
+    {
+        if (is_array($conf)) {
+            foreach ($conf as $k => $v) {
+                $this->timeJobs[(int)$v['timeInterval']] = $v['res'];
             }
         }
         //$this -> init();
     }
-    public  function init(){
+
+    public function init()
+    {
         //$this -> timePoll();
     }
-    public function onReceive($server,$clientId, $fromId, $data) {
+
+    public function onReceive($server, $clientId, $fromId, $data)
+    {
     }
+
     public function onStart($serv, $workerId)
     {
-        $this -> timePoll($serv);
+        $this->timePoll($serv);
     }
+
     public function onShutdown($serv, $workerId)
     {
     }
+
     public function onConnect($server, $fd, $fromId)
     {
 
     }
+
     public function onClose($server, $fd, $fromId)
     {
 
     }
+
     public function onTask($serv, $taskId, $fromId, $data)
     {
 
     }
+
     public function onFinish($serv, $taskId, $data)
     {
 
     }
+
     //启动定时期,监听IPC通道
     public function onTimer($serv, $interval)
     {
-        $res = $this -> timeJobs[$interval];
-        if($data = $res -> recv()){
-            $this -> onReceive($serv, $res -> key, $res -> key, $data);
+        $res = $this->timeJobs[$interval];
+        if ($data = $res->recv()) {
+            $this->onReceive($serv, $res->key, $res->key, $data);
         }
     }
+
     //设置事件接口
-    public function setHandle($fun, $type = 'def'){
-        $this -> handles[$type] = $fun;
+    public function setHandle($fun, $type = 'def')
+    {
+        $this->handles[$type] = $fun;
     }
 
-    public function getHandle($type = 'def'){
-        return isset($this -> handles[$type]) ? $this -> handles[$type] : null;
+    public function getHandle($type = 'def')
+    {
+        return isset($this->handles[$type]) ? $this->handles[$type] : null;
     }
 
     //要监听的fd
-    public function setFd($fd, $type = 'def'){
-        $this -> fds[$type] = $fd;
+    public function setFd($fd, $type = 'def')
+    {
+        $this->fds[$type] = $fd;
     }
 
-    public function getFd($type = 'def'){
-        return isset($this -> fds[$type]) ? $this -> fds[$type] : -1;
+    public function getFd($type = 'def')
+    {
+        return isset($this->fds[$type]) ? $this->fds[$type] : -1;
     }
 
     //要监听的使用定时器
-    private function timePoll($serv){
-        if(is_array($this -> timeJobs)){
-            foreach($this -> timeJobs as $k => $v){
-                $serv -> addtimer($k);
+    private function timePoll($serv)
+    {
+        if (is_array($this->timeJobs)) {
+            foreach ($this->timeJobs as $k => $v) {
+                $serv->addtimer($k);
             }
         }
     }
-    public function pepoll($opt = 'ADD', $type = 'def', $event = SWOOLE_EVENT_READ){
-        $fd = $this -> getFd($type);
-        if($fd === -1) return false;
-        $readHandle = $this -> getHandle('read');
-        $writeHandle = $this -> getHandle('write');
-        if($writeHandle === null && $readHandle === null) return false;
-        switch ($opt){
+
+    public function pepoll($opt = 'ADD', $type = 'def', $event = SWOOLE_EVENT_READ)
+    {
+        $fd = $this->getFd($type);
+        if ($fd === -1) return false;
+        $readHandle = $this->getHandle('read');
+        $writeHandle = $this->getHandle('write');
+        if ($writeHandle === null && $readHandle === null) return false;
+        switch ($opt) {
             case 'ADD' : {
                 $ret = swoole_event_add($fd, $readHandle, $writeHandle, $event);
                 break;
