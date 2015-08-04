@@ -167,8 +167,7 @@ php swoole testHttpServ start
 ```
 ## Performance 
 ![ABC](https://github.com/tencent-php/tsf/blob/markyuan/image/press.jpg) 
-
-
+![ABC](https://github.com/tencent-php/tsf/blob/markyuan/image/config.jpg) 
 ## Contribution
 
 Your contribution to TSF development is very welcome!
