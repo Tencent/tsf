@@ -20,34 +20,32 @@ $cmd = $argv[1];   //cmd name
 $name = $argv[2];
 
 //需要cmd 和 name  name 支持 all 和 具体的serverName
-if (! $cmd || ! $name)
-{
+if (!$cmd || !$name) {
     echo "please input cmd and server name: start all,start testserv ";
     exit;
 }
 //读取配置文件 然后启动对应的server
 
-$configPath=(dirname(dirname(SWOOLEBASEPATH))). '/conf/'.$name.'.ini';//获取配置地址
+$configPath = (dirname(dirname(SWOOLEBASEPATH))) . '/conf/' . $name . '.ini';//获取配置地址
 // $config is file path? 提前读取 只读一次
-if (! file_exists($configPath))
-{
-            throw new \Exception("[error] profiles [$configPath] can not be loaded");
+if (!file_exists($configPath)) {
+    throw new \Exception("[error] profiles [$configPath] can not be loaded");
 }
-        // Load the configuration file into an array
+// Load the configuration file into an array
 $config = parse_ini_file($configPath, true);
 //根据config里面的不同内容启动不同的server  定义网络层 UDP、TCP
-if($config['server']['type']=='http'){  //
+if ($config['server']['type'] == 'http') {  //
     $server = new \Swoole\Network\HttpServer();
 
-}elseif($config['server']['type']=='tcp'){
+} elseif ($config['server']['type'] == 'tcp') {
     $server = new \Swoole\Network\TcpServer();
 
-}elseif($config['server']['type']=='udp'){
+} elseif ($config['server']['type'] == 'udp') {
     $server = new  \Swoole\Network\UdpServer();
 }
 
 //合并config 只读一次
-$server->config=array_merge($server->config, $config);
+$server->config = array_merge($server->config, $config);
 
 //通过root 来获取所有的源码
 
@@ -55,7 +53,6 @@ $server->config=array_merge($server->config, $config);
 
 //获取配置 载入index
 //index require
-
 
 
 //$server->serverClass='testHttpServ';

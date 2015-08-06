@@ -9,6 +9,7 @@
 namespace Swoole\Network\Protocol;
 
 use Swoole;
+
 class ProtobufServer extends Swoole\Network\Protocol implements Swoole\Server\Protocol
 {
     private $requests;
@@ -16,14 +17,14 @@ class ProtobufServer extends Swoole\Network\Protocol implements Swoole\Server\Pr
     public $webEtx;
 
     const ST_FINISH = 1; //完成，进入处理流程
-    const ST_WAIT   = 2; //等待数据
-    const ST_ERROR  = 3; //错误，丢弃此包
+    const ST_WAIT = 2; //等待数据
+    const ST_ERROR = 3; //错误，丢弃此包
 
-    public function onReceive($serv, $fd, $fromId, $data) {
+    public function onReceive($serv, $fd, $fromId, $data)
+    {
         $ret = $this->checkBuffer($fd, $data);// 检查buffer
 
-        switch($ret)
-        {
+        switch ($ret) {
             case self::ST_ERROR:
                 return true;           // 错误的请求
             case self::ST_WAIT:
@@ -34,12 +35,12 @@ class ProtobufServer extends Swoole\Network\Protocol implements Swoole\Server\Pr
         $request = $this->requests[$fd];
         $this->onRequest($serv, $fd, $request);
         unset($this->requests[$fd]);
-   }
+    }
 
-    public function checkBuffer($fd, $data) {
+    public function checkBuffer($fd, $data)
+    {
         //新的连接
-        if (!isset($this->requests[$fd]))
-        {
+        if (!isset($this->requests[$fd])) {
             $webStx = substr($data, 0, 1); // 获取起始符
             if (pack("C", $this->webStx) !== $webStx) {
                 return self::ST_ERROR; // 错误的开始符
@@ -61,7 +62,7 @@ class ProtobufServer extends Swoole\Network\Protocol implements Swoole\Server\Pr
 
             $totalLength = 18 + $headLen + $bodyLen;
             if (strlen($data) > $totalLength) {
-               return self::ST_ERROR; // 无效数据包，弃之
+                return self::ST_ERROR; // 无效数据包，弃之
             }
 
             $this->requests[$fd] = array(
@@ -72,8 +73,7 @@ class ProtobufServer extends Swoole\Network\Protocol implements Swoole\Server\Pr
                 'length' => $totalLength,
                 'buffer' => $data,
             );
-        }
-        else {  // 大包数据需要合并数据，默认超过8k需要走此逻辑
+        } else {  // 大包数据需要合并数据，默认超过8k需要走此逻辑
             $this->requests[$fd]['buffer'] .= $data;
         }
 
@@ -82,8 +82,7 @@ class ProtobufServer extends Swoole\Network\Protocol implements Swoole\Server\Pr
         if ($dataLength > $this->requests[$fd]['length']) {
             // 无效数据包，弃之
             return self::ST_ERROR;
-        }
-        elseif($dataLength < $this->requests[$fd]['length']) {
+        } elseif ($dataLength < $this->requests[$fd]['length']) {
             return self::ST_WAIT; // 数据包不完整，继续等待
         }
 
@@ -95,11 +94,13 @@ class ProtobufServer extends Swoole\Network\Protocol implements Swoole\Server\Pr
         return self::ST_FINISH; // 数据包完整
     }
 
-    public function onRequest($serv, $fd, $request) {
+    public function onRequest($serv, $fd, $request)
+    {
 
     }
 
-    public function onStart($serv, $workerId){
+    public function onStart($serv, $workerId)
+    {
 
     }
 
@@ -120,9 +121,12 @@ class ProtobufServer extends Swoole\Network\Protocol implements Swoole\Server\Pr
     {
 
     }
-    public function onTimer($serv, $interval){
+
+    public function onTimer($serv, $interval)
+    {
 
     }
+
     public function onFinish($serv, $taskId, $data)
     {
 

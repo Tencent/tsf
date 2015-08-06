@@ -1,5 +1,6 @@
 <?php
 namespace Swoole\Http;
+
 use Swoole;
 
 class Response
@@ -44,11 +45,11 @@ class Response
 
     function send_http_status($code)
     {
-        $this->head[0] = $this->http_protocol.' '.self::$HTTP_HEADERS[$code];
+        $this->head[0] = $this->http_protocol . ' ' . self::$HTTP_HEADERS[$code];
         $this->http_status = $code;
     }
 
-    function send_head($key,$value)
+    function send_head($key, $value)
     {
         $this->head[$key] = $value;
     }
@@ -65,10 +66,10 @@ class Response
      */
     function setcookie($name, $value = null, $expire = null, $path = '/', $domain = null, $secure = null, $httponly = null)
     {
-        if($value==null) $value='deleted';
-        $cookie = "$name=$value; expires=Tue, ".date("D, d-M-Y H:i:s T",$expire)."; path=$path";
-        if($domain) $cookie.="; domain=$domain";
-        if($httponly) $cookie.='; httponly';
+        if ($value == null) $value = 'deleted';
+        $cookie = "$name=$value; expires=Tue, " . date("D, d-M-Y H:i:s T", $expire) . "; path=$path";
+        if ($domain) $cookie .= "; domain=$domain";
+        if ($httponly) $cookie .= '; httponly';
         $this->cookie[] = $cookie;
     }
 
@@ -81,46 +82,34 @@ class Response
     function getHeader($fastcgi = false)
     {
         $out = '';
-        if ($fastcgi)
-        {
-            $out .= 'Status: '.$this->http_status.' '.self::$HTTP_HEADERS[$this->http_status]."\r\n";
-        }
-        else
-        {
+        if ($fastcgi) {
+            $out .= 'Status: ' . $this->http_status . ' ' . self::$HTTP_HEADERS[$this->http_status] . "\r\n";
+        } else {
             //Protocol
-            if (isset($this->head[0]))
-            {
-                $out .= $this->head[0]."\r\n";
+            if (isset($this->head[0])) {
+                $out .= $this->head[0] . "\r\n";
                 unset($this->head[0]);
-            }
-            else
-            {
+            } else {
                 $out = "HTTP/1.1 200 OK\r\n";
             }
         }
         //fill header
-        if (!isset($this->head['Server']))
-        {
+        if (!isset($this->head['Server'])) {
             $this->head['Server'] = Swoole\Network\Protocol\HttpServer::SOFTWARE;
         }
-        if (!isset($this->head['Content-Type']))
-        {
+        if (!isset($this->head['Content-Type'])) {
             $this->head['Content-Type'] = 'text/html; charset=utf-8';
         }
-        if (!isset($this->head['Content-Length']))
-        {
+        if (!isset($this->head['Content-Length'])) {
             $this->head['Content-Length'] = strlen($this->body);
         }
         //Headers
-        foreach($this->head as $k=>$v)
-        {
-            $out .= $k.': '.$v."\r\n";
+        foreach ($this->head as $k => $v) {
+            $out .= $k . ': ' . $v . "\r\n";
         }
         //Cookies
-        if (!empty($this->cookie) and is_array($this->cookie))
-        {
-            foreach($this->cookie as $v)
-            {
+        if (!empty($this->cookie) and is_array($this->cookie)) {
+            foreach ($this->cookie as $v) {
                 $out .= "Set-Cookie: $v\r\n";
             }
         }

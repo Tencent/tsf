@@ -8,12 +8,14 @@
 
 namespace Swoole\Coroutine;
 
-class RetVal {
+class RetVal
+{
 
-	protected $info;
+    protected $info;
 
-	public function __construct($info){
+    public function __construct($info)
+    {
 
-		$this ->info = $info;
-	}
+        $this->info = $info;
+    }
 }

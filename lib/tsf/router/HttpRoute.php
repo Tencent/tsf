@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Created by JetBrains PhpStorm.
  * User: jimmyszhou
@@ -7,10 +8,12 @@
  * To change this template use File | Settings | File Templates.
  * uri => cmd =>
  */
-class HttpRoute {
+class HttpRoute
+{
 
-    public static function getRoute($uri,$verb=null){
-        return array('r'=>0,'controller'=>'Mark','action'=>'Marktest');
+    public static function getRoute($uri, $verb = null)
+    {
+        return array('r' => 0, 'controller' => 'Mark', 'action' => 'Marktest');
 
     }
 

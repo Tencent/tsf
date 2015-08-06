@@ -16,7 +16,7 @@ class Core
     public $env;
     protected $hooks = array();
 
-    const HOOK_INIT  = 1; //初始化
+    const HOOK_INIT = 1; //初始化
     const HOOK_ROUTE = 2; //URL路由
     const HOOK_CLEAN = 3; //清理
 
@@ -30,27 +30,25 @@ class Core
 
     static function getInstance()
     {
-        if (!self::$php)
-        {
+        if (!self::$php) {
             self::$php = new Swoole;
         }
         return self::$php;
     }
 
     /**
-    * 初始化环境
-    * @return unknown_type
-    */
-   function __init()
-   {
-       if (defined('DEBUG') and DEBUG == 'on')
-       {
-           //记录运行时间和内存占用情况
-           $this->env['runtime']['start'] = microtime(true);
-           $this->env['runtime']['mem'] = memory_get_usage();
-       }
-       $this->callHook(self::HOOK_INIT);
-   }
+     * 初始化环境
+     * @return unknown_type
+     */
+    function __init()
+    {
+        if (defined('DEBUG') and DEBUG == 'on') {
+            //记录运行时间和内存占用情况
+            $this->env['runtime']['start'] = microtime(true);
+            $this->env['runtime']['mem'] = memory_get_usage();
+        }
+        $this->callHook(self::HOOK_INIT);
+    }
 
     /**
      * 执行Hook函数列表
@@ -58,12 +56,9 @@ class Core
      */
     protected function callHook($type)
     {
-        if(isset($this->hooks[$type]))
-        {
-            foreach($this->hooks[$type] as $f)
-            {
-                if(!is_callable($f))
-                {
+        if (isset($this->hooks[$type])) {
+            foreach ($this->hooks[$type] as $f) {
+                if (!is_callable($f)) {
                     trigger_error("SwooleFramework: hook function[$f] is not callable.");
                     continue;
                 }
@@ -79,11 +74,11 @@ class Core
     function runtime()
     {
         // 显示运行时间
-        $return['time'] = number_format((microtime(true)-$this->env['runtime']['start']),4).'s';
+        $return['time'] = number_format((microtime(true) - $this->env['runtime']['start']), 4) . 's';
 
-        $startMem =  array_sum(explode(' ',$this->env['runtime']['mem']));
-        $endMem   =  array_sum(explode(' ',memory_get_usage()));
-        $return['memory'] = number_format(($endMem - $startMem)/1024).'kb';
+        $startMem = array_sum(explode(' ', $this->env['runtime']['mem']));
+        $endMem = array_sum(explode(' ', memory_get_usage()));
+        $return['memory'] = number_format(($endMem - $startMem) / 1024) . 'kb';
         return $return;
     }
 

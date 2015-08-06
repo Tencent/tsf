@@ -8,9 +8,11 @@
 
 namespace Swoole\Coroutine;
 
-class SysCall {
+class SysCall
+{
 
-	public static function end($words){
-		return new RetVal($words);
-	}
+    public static function end($words)
+    {
+        return new RetVal($words);
+    }
 }
