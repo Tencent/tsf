@@ -31,15 +31,9 @@ class HttpHelper
         //正则匹配的路由 支持restful 提供给深度用户使用
         // $appRoute = HttpRoute::urlrouter_rewrite($uri,$method);
         // explode 解析类似于  controller/action类型的url
-        <<<<<<<
-        Updated upstream
-       //默认会解析到default/index
 
-        $mvcArr = explode('/', $uri);
-=======
         //默认会解析到default/index
         $mvcArr = explode('/', $uri);
->>>>>>> Stashed changes
         $appRoute['controller'] = isset($mvcArr[1]) ? $mvcArr[1] : 'default';
         $appRoute['action'] = isset($mvcArr[2]) ? $mvcArr[2] : 'index';
 
