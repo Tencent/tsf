@@ -9,47 +9,60 @@
 namespace Swoole\Network\Protocol;
 
 use Swoole;
+
 class BaseServer extends Swoole\Network\Protocol implements Swoole\Server\Protocol
 {
-        public function onReceive($server,$clientId, $fromId, $data) {
+    public function onReceive($server, $clientId, $fromId, $data)
+    {
 
-        }
-        public function onStart($serv, $workerId)
-        {
-        }
-        public function onShutdown($serv, $workerId)
-        {
-        }
-        public function onConnect($server, $fd, $fromId)
-        {
+    }
 
-        }
-        public function onClose($server, $fd, $fromId)
-        {
+    public function onStart($serv, $workerId)
+    {
+    }
 
-        }
-        public function onTask($serv, $taskId, $fromId, $data)
-        {
+    public function onShutdown($serv, $workerId)
+    {
+    }
 
-        }
-        public function onFinish($serv, $taskId, $data)
-        {
+    public function onConnect($server, $fd, $fromId)
+    {
 
-        }
-        public function onTimer($serv, $interval)
-        {
+    }
 
-        }
-        public function onRequest($request, $response) {
+    public function onClose($server, $fd, $fromId)
+    {
 
-        }
-        /**
-         * [onHttpWorkInit http svr worker init]
-         * @param  [type] $request  [description]
-         * @param  [type] $response [description]
-         * @return [type]           [description]
-         */
-        public function onHttpWorkInit($request, $response){
+    }
 
-        }
+    public function onTask($serv, $taskId, $fromId, $data)
+    {
+
+    }
+
+    public function onFinish($serv, $taskId, $data)
+    {
+
+    }
+
+    public function onTimer($serv, $interval)
+    {
+
+    }
+
+    public function onRequest($request, $response)
+    {
+
+    }
+
+    /**
+     * [onHttpWorkInit http svr worker init]
+     * @param  [type] $request  [description]
+     * @param  [type] $response [description]
+     * @return [type]           [description]
+     */
+    public function onHttpWorkInit($request, $response)
+    {
+
+    }
 }

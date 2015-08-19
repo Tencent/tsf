@@ -1,5 +1,6 @@
 <?php
 namespace Swoole\Http;
+
 use Swoole;
 
 class Request
@@ -55,9 +56,8 @@ class Request
         /**
          * 将HTTP头信息赋值给$_SERVER超全局变量
          */
-        foreach($this->head as $key => $value)
-        {
-            $_key = 'HTTP_'.strtoupper(str_replace('-', '_', $key));
+        foreach ($this->head as $key => $value) {
+            $_key = 'HTTP_' . strtoupper(str_replace('-', '_', $key));
             $_SERVER[$_key] = $value;
         }
         $_SERVER['REMOTE_ADDR'] = $this->remote_ip;

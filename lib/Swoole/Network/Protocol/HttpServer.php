@@ -7,6 +7,7 @@
  * To change this template use File | Settings | File Templates.
  */
 namespace Swoole\Network\Protocol;
+
 use Swoole;
 
 class HttpServer extends Swoole\Network\Protocol implements Swoole\Server\Protocol
@@ -24,8 +25,8 @@ class HttpServer extends Swoole\Network\Protocol implements Swoole\Server\Protoc
     const HTTP_HEAD_MAXLEN = 2048; //http头最大长度不得超过2k
 
     const ST_FINISH = 1; //完成，进入处理流程
-    const ST_WAIT   = 2; //等待数据
-    const ST_ERROR  = 3; //错误，丢弃此包
+    const ST_WAIT = 2; //等待数据
+    const ST_ERROR = 3; //错误，丢弃此包
 
     function __construct()
     {
@@ -35,21 +36,16 @@ class HttpServer extends Swoole\Network\Protocol implements Swoole\Server\Protoc
     function checkHeader($client_id, $http_data)
     {
         //新的连接
-        if (!isset($this->requests[$client_id]))
-        {
-            if (!empty($this->buffer_header[$client_id]))
-            {
-                $http_data = $this->buffer_header[$client_id].$http_data;
+        if (!isset($this->requests[$client_id])) {
+            if (!empty($this->buffer_header[$client_id])) {
+                $http_data = $this->buffer_header[$client_id] . $http_data;
             }
             //HTTP结束符
             $ret = strpos($http_data, self::HTTP_EOF);
             //没有找到EOF，继续等待数据
-            if ($ret === false)
-            {
+            if ($ret === false) {
                 return false;
-            }
-            else
-            {
+            } else {
                 $this->buffer_header[$client_id] = '';
                 $request = new Swoole\Http\Request;
                 //GET没有body
@@ -61,16 +57,13 @@ class HttpServer extends Swoole\Network\Protocol implements Swoole\Server\Protoc
                 //保存请求
                 $this->requests[$client_id] = $request;
                 //解析失败
-                if ($request->head == false)
-                {
-                    $this->log("parseHeader fail. header=".$header);
+                if ($request->head == false) {
+                    $this->log("parseHeader fail. header=" . $header);
                     return false;
                 }
             }
-        }
-        //POST请求需要合并数据
-        else
-        {
+        } //POST请求需要合并数据
+        else {
             $request = $this->requests[$client_id];
             $request->body .= $http_data;
         }
@@ -79,22 +72,17 @@ class HttpServer extends Swoole\Network\Protocol implements Swoole\Server\Protoc
 
     function checkPost($request)
     {
-        if (isset($request->head['Content-Length']))
-        {
+        if (isset($request->head['Content-Length'])) {
             //超过最大尺寸
-            if (intval($request->head['Content-Length']) > $this->buffer_maxlen)
-            {
+            if (intval($request->head['Content-Length']) > $this->buffer_maxlen) {
                 $this->log("checkPost fail. post_data is too long.");
                 return self::ST_ERROR;
             }
             //不完整，继续等待数据
-            if (intval($request->head['Content-Length']) > strlen($request->body))
-            {
+            if (intval($request->head['Content-Length']) > strlen($request->body)) {
                 return self::ST_WAIT;
-            }
-            //长度正确
-            else
-            {
+            } //长度正确
+            else {
                 return self::ST_FINISH;
             }
         }
@@ -105,36 +93,28 @@ class HttpServer extends Swoole\Network\Protocol implements Swoole\Server\Protoc
 
     function checkData($client_id, $http_data)
     {
-        if (isset($this->buffer_header[$client_id]))
-        {
-            $http_data = $this->buffer_header[$client_id].$http_data;
+        if (isset($this->buffer_header[$client_id])) {
+            $http_data = $this->buffer_header[$client_id] . $http_data;
         }
         //检测头
         $request = $this->checkHeader($client_id, $http_data);
         //错误的http头
-        if ($request === false)
-        {
+        if ($request === false) {
             $this->buffer_header[$client_id] = $http_data;
             //超过最大HTTP头限制了
-            if (strlen($http_data) > self::HTTP_HEAD_MAXLEN)
-            {
+            if (strlen($http_data) > self::HTTP_HEAD_MAXLEN) {
                 $this->log("http header is too long.");
                 return self::ST_ERROR;
-            }
-            else
-            {
+            } else {
                 $this->log("wait request data. fd={$client_id}");
                 return self::ST_WAIT;
             }
         }
         //POST请求需要检测body是否完整
-        if ($request->meta['method'] == 'POST')
-        {
+        if ($request->meta['method'] == 'POST') {
             return $this->checkPost($request);
-        }
-        //GET请求直接进入处理流程
-        else
-        {
+        } //GET请求直接进入处理流程
+        else {
             return self::ST_FINISH;
         }
     }
@@ -151,8 +131,7 @@ class HttpServer extends Swoole\Network\Protocol implements Swoole\Server\Protoc
     {
         //检测request data完整性
         $ret = $this->checkData($client_id, $data);
-        switch($ret)
-        {
+        switch ($ret) {
             //错误的请求
             case self::ST_ERROR;
                 $this->server->close($client_id);
@@ -173,7 +152,7 @@ class HttpServer extends Swoole\Network\Protocol implements Swoole\Server\Protoc
         $request->fd = $client_id;
         $request->setGlobal();
         $dataRet = $this->onRequest($request);
-        if (! is_null($dataRet)) // 有返回直接response
+        if (!is_null($dataRet)) // 有返回直接response
         {
             $response = new Swoole\Http\Response;
             //处理请求，产生response对象
@@ -185,8 +164,7 @@ class HttpServer extends Swoole\Network\Protocol implements Swoole\Server\Protoc
 
     function afterResponse(Swoole\Http\Request $request, Swoole\Http\Response $response)
     {
-        if (!$this->keepalive or $response->head['Connection'] == 'close')
-        {
+        if (!$this->keepalive or $response->head['Connection'] == 'close') {
             $this->server->close($request->fd);
         }
         $request->unsetGlobal();
@@ -207,18 +185,15 @@ class HttpServer extends Swoole\Network\Protocol implements Swoole\Server\Protoc
         $request->time = time();
         $request->meta['path'] = $url_info['path'];
         if (isset($url_info['fragment'])) $request->meta['fragment'] = $url_info['fragment'];
-        if (isset($url_info['query']))
-        {
+        if (isset($url_info['query'])) {
             parse_str($url_info['query'], $request->get);
         }
         //POST请求,有http body
-        if ($request->meta['method'] === 'POST')
-        {
+        if ($request->meta['method'] === 'POST') {
             $this->parser->parseBody($request);
         }
         //解析Cookies
-        if (!empty($request->head['Cookie']))
-        {
+        if (!empty($request->head['Cookie'])) {
             $this->parser->parseCookie($request);
         }
         return $request;
@@ -232,37 +207,30 @@ class HttpServer extends Swoole\Network\Protocol implements Swoole\Server\Protoc
      */
     function response(Swoole\Http\Request $request, Swoole\Http\Response $response)
     {
-        if (!isset($response->head['Date']))
-        {
+        if (!isset($response->head['Date'])) {
             $response->head['Date'] = gmdate("D, d M Y H:i:s T");
         }
-        if (!isset($response->head['Connection']))
-        {
+        if (!isset($response->head['Connection'])) {
             //keepalive
-            if ($this->keepalive and (isset($request->head['Connection']) and strtolower($request->head['Connection']) == 'keep-alive'))
-            {
+            if ($this->keepalive and (isset($request->head['Connection']) and strtolower($request->head['Connection']) == 'keep-alive')) {
                 $response->head['KeepAlive'] = 'on';
                 $response->head['Connection'] = 'keep-alive';
-            }
-            else
-            {
+            } else {
                 $response->head['KeepAlive'] = 'off';
                 $response->head['Connection'] = 'close';
             }
         }
         //过期命中
-        if ($this->expire and $response->http_status == 304)
-        {
+        if ($this->expire and $response->http_status == 304) {
             $out = $response->getHeader();
             return $this->server->send($request->fd, $out);
         }
         //压缩
-        if ($this->gzip)
-        {
+        if ($this->gzip) {
             $response->head['Content-Encoding'] = 'deflate';
             $response->body = gzdeflate($response->body, $this->config['server']['gzip_level']);
         }
-        $out = $response->getHeader().$response->body;
+        $out = $response->getHeader() . $response->body;
         $ret = $this->server->send($request->fd, $out);
         $this->afterResponse($request, $response);
         return $ret;
@@ -272,7 +240,7 @@ class HttpServer extends Swoole\Network\Protocol implements Swoole\Server\Protoc
      * 发生了http错误
      * @param                 $code
      * @param Swoole\Http\Response $response
-     * @param string          $content
+     * @param string $content
      */
     function httpError($code, Swoole\Http\Response $response, $content = '')
     {
@@ -288,8 +256,7 @@ class HttpServer extends Swoole\Network\Protocol implements Swoole\Server\Protoc
     {
         $error = error_get_last();
         if (!isset($error['type'])) return;
-        switch ($error['type'])
-        {
+        switch ($error['type']) {
             case E_ERROR :
             case E_PARSE :
             case E_DEPRECATED:
@@ -300,9 +267,8 @@ class HttpServer extends Swoole\Network\Protocol implements Swoole\Server\Protoc
                 return;
         }
         $errorMsg = "{$error['message']} ({$error['file']}:{$error['line']})";
-        $message = self::SOFTWARE." Application Error: " . $errorMsg;
-        if (empty($this->currentResponse))
-        {
+        $message = self::SOFTWARE . " Application Error: " . $errorMsg;
+        if (empty($this->currentResponse)) {
             $this->currentResponse = new Swoole\Http\Response();
         }
         $this->currentResponse->send_http_status(500);
@@ -340,9 +306,12 @@ class HttpServer extends Swoole\Network\Protocol implements Swoole\Server\Protoc
     {
 
     }
-    public function onTimer($serv, $interval){
+
+    public function onTimer($serv, $interval)
+    {
 
     }
+
     /**
      * @param \swoole_server $serv
      * @param $fd

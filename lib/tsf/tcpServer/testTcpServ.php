@@ -1,8 +1,10 @@
 <?php
 
-class testTcpServ extends Swoole\Network\Protocol\BaseServer{
+class testTcpServ extends Swoole\Network\Protocol\BaseServer
+{
 
-    public function onReceive($server, $fd, $fromId, $data) {
+    public function onReceive($server, $fd, $fromId, $data)
+    {
         //echo "receive \n";
 
     }

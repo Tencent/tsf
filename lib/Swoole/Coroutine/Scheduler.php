@@ -8,35 +8,40 @@
 
 namespace Swoole\Coroutine;
 
-class Scheduler {
+class Scheduler
+{
 
-	protected $maxTaskId = 0;
-	protected $taskQueue;
+    protected $maxTaskId = 0;
+    protected $taskQueue;
 
-	public function __construct(){
+    public function __construct()
+    {
 
-		$this ->taskQueue = new \SplQueue();
-	}
+        $this->taskQueue = new \SplQueue();
+    }
 
-	public function newTask(\Generator $coroutine){
+    public function newTask(\Generator $coroutine)
+    {
 
-		$taskId = ++ $this ->maxTaskId;
-		$task = new Task($taskId, $coroutine);
-		$this ->taskQueue ->enqueue($task);
-	}
+        $taskId = ++$this->maxTaskId;
+        $task = new Task($taskId, $coroutine);
+        $this->taskQueue->enqueue($task);
+    }
 
-	public function schedule(Task $task){
+    public function schedule(Task $task)
+    {
 
-		$this ->taskQueue ->enqueue($task);
-	}
+        $this->taskQueue->enqueue($task);
+    }
 
-	public function run(){
+    public function run()
+    {
 
-		while (!$this ->taskQueue ->isEmpty()) {
-			$task = $this ->taskQueue ->dequeue();
-			$task ->run($task ->getCoroutine());
-		}
-	}
+        while (!$this->taskQueue->isEmpty()) {
+            $task = $this->taskQueue->dequeue();
+            $task->run($task->getCoroutine());
+        }
+    }
 
 
 }

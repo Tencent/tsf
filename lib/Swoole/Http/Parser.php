@@ -1,5 +1,6 @@
 <?php
 namespace Swoole\Http;
+
 use Swoole;
 
 /**
@@ -35,8 +36,7 @@ class Parser
         list($meta['method'], $meta['uri'], $meta['protocol']) = explode(' ', $headerLines[0], 3);
 
         //错误的HTTP请求
-        if (empty($meta['method']) or empty($meta['uri']) or empty($meta['protocol']))
-        {
+        if (empty($meta['method']) or empty($meta['uri']) or empty($meta['protocol'])) {
             return false;
         }
         unset($headerLines[0]);
@@ -52,18 +52,16 @@ class Parser
      */
     static function parseHeaderLine($headerLines)
     {
-        if (is_string($headerLines))
-        {
+        if (is_string($headerLines)) {
             $headerLines = explode("\r\n", $headerLines);
         }
         $header = array();
-        foreach ($headerLines as $_h)
-        {
+        foreach ($headerLines as $_h) {
             $_h = trim($_h);
             if (empty($_h)) continue;
             $_r = explode(':', $_h, 2);
             $key = $_r[0];
-            $value = isset($_r[1])?$_r[1]:'';
+            $value = isset($_r[1]) ? $_r[1] : '';
             $header[trim($key)] = trim($value);
         }
         return $header;
@@ -73,16 +71,12 @@ class Parser
     {
         $params = array();
         $blocks = explode(";", $str);
-        foreach ($blocks as $b)
-        {
+        foreach ($blocks as $b) {
             $_r = explode("=", $b, 2);
-            if(count($_r)==2)
-            {
+            if (count($_r) == 2) {
                 list ($key, $value) = $_r;
                 $params[trim($key)] = trim($value, "\r\n \t\"");
-            }
-            else
-            {
+            } else {
                 $params[$_r[0]] = '';
             }
         }
@@ -92,15 +86,13 @@ class Parser
     function parseBody($request)
     {
         $cd = strstr($request->head['Content-Type'], 'boundary');
-        if (isset($request->head['Content-Type']) and $cd !== false)
-        {
+        if (isset($request->head['Content-Type']) and $cd !== false) {
             $this->parseFormData($request, $cd);
-        }
-        else
-        {
+        } else {
             parse_str($request->body, $request->post);
         }
     }
+
     /**
      * 解析Cookies
      * @param $request \Swoole\Request
@@ -121,23 +113,19 @@ class Parser
     {
         $cd = '--' . str_replace('boundary=', '', $cd);
         $form = explode($cd, rtrim($request->body, "-")); //去掉末尾的--
-        foreach ($form as $f)
-        {
+        foreach ($form as $f) {
             if ($f === '') continue;
             $parts = explode("\r\n\r\n", trim($f));
             $head = self::parseHeaderLine($parts[0]);
             if (!isset($head['Content-Disposition'])) continue;
             $meta = self::parseParams($head['Content-Disposition']);
             //filename字段表示它是一个文件
-            if (!isset($meta['filename']))
-            {
-                if(count($parts) < 2) $parts[1] = "";
+            if (!isset($meta['filename'])) {
+                if (count($parts) < 2) $parts[1] = "";
                 //支持checkbox
                 if (substr($meta['name'], -2) === '[]') $request->post[substr($meta['name'], 0, -2)][] = trim($parts[1]);
                 else $request->post[$meta['name']] = trim($parts[1], "\r\n");
-            }
-            else
-            {
+            } else {
                 $file = trim($parts[1]);
                 $tmp_file = tempnam('/tmp', 'sw');
                 file_put_contents($tmp_file, $file);
@@ -159,13 +147,11 @@ class Parser
     function parse($data)
     {
         $_header = strstr($data, self::HTTP_EOF, true);
-        if ($_header === false)
-        {
+        if ($_header === false) {
             $this->buffer = $data;
         }
         $header = self::parseHeader($_header);
-        if ($header === false)
-        {
+        if ($header === false) {
             $this->isError = true;
         }
         $this->header = $header;
