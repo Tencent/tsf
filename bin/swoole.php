@@ -194,13 +194,8 @@ function StartServSock($RunServer)
         'worker_num' => 1,
         'daemonize' => true
     ));
-    $serv->on('WorkerStart', function ($serv, $workerId) {
-        //监控周期
-        $serv->addtimer(1000);
-
-    });
-    //定时器中操作 主要为轮巡 启动服务
-    $serv->on('Timer', function ($serv, $interval) {
+    
+    $tick_check = function ($serv, $interval) {
         StartLogTimer(__LINE__ . 'timer start ' . time());
         if (empty($serv->runServer)) {
             StartLogTimer(__LINE__ . ' ' . 'no server is running ' . PHP_EOL);
@@ -218,7 +213,21 @@ function StartServSock($RunServer)
                 StartLogTimer(__LINE__ . date('Y-m-d H:i:s') . '  ' . print_r($serverName, true) . ' server is running success' . PHP_EOL);
             }
         }
+    };
+    
+    $serv->on('WorkerStart', function ($serv, $workerId) {
+        //监控周期
+        if (!$serv->taskworker) {
+            $serv->tick(1000, $tick_check);
+        }
+        else
+        {
+            $serv->addtimer(1000);
+        }
     });
+    
+    //定时器中操作 主要为轮巡 启动服务
+    $serv->on('Timer', $tick_check);
 
     $serv->on('connect', function ($serv, $fd, $from_id) {
         echo "[#" . posix_getpid() . "]\tClient@[$fd:$from_id]: Connect.\n";
