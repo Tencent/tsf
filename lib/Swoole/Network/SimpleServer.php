@@ -8,7 +8,7 @@
  * To change this template use File | Settings | File Templates.
  * 对应swoole的base模式的server
  */
-class SimpleServer extends Swoole\Server implements Swoole\Server\Driver
+class SimpleServer extends Swoole\Servers implements Swoole\Server\Driver
 {
     protected $mode = SWOOLE_BASE;
 

@@ -196,14 +196,21 @@ function StartServSock($RunServer)
     ));
     $serv->on('WorkerStart', function ($serv, $workerId) {
         //监控周期
-        $serv->addtimer(1000);
-
+        //edit by Terry Gao at 2016-12-27
+        //由于新版Swoole(1.8+)移除了addtimer方法，改用swoole_server->tick方法替代
+        //相应的onTimer回调也改为onTickTimer
+        //$serv->addtimer(1000);
+        $timeer_id = $serv->tick(1000, function($timer_id, $serv){
+            onTickTimer($serv);
+        }, $serv);
     });
     //定时器中操作 主要为轮巡 启动服务
-    $serv->on('Timer', function ($serv, $interval) {
-        StartLogTimer(__LINE__ . 'timer start ' . time());
+//    $serv->on('Timer', function ($serv, $interval) {
+    function onTickTimer($serv)
+    {
+        StartLogTimer(__LINE__ . ' timer start ' . time());
         if (empty($serv->runServer)) {
-            StartLogTimer(__LINE__ . ' ' . 'no server is running ' . PHP_EOL);
+            StartLogTimer(__LINE__ . ' no server is running ' . PHP_EOL);
             return;
         };
         foreach ($serv->runServer as $serverName) {
@@ -212,14 +219,14 @@ function StartServSock($RunServer)
             if (empty($ret)) {//挂了 什么都没有  之后可能要通过数量来获取
                 //todo
                 StartServ($serverName['php'], 'start', $serverName['name']);
-                StartLogTimer(__LINE__ . date('Y-m-d H:i:s') . '  ' . print_r($serverName, true) . ' server is dead , start to restart' . PHP_EOL);
+                StartLogTimer(__LINE__ .' '. date('Y-m-d H:i:s') . '  ' . print_r($serverName, true) . ' server is dead , start to restart' . PHP_EOL);
 
             } else {
-                StartLogTimer(__LINE__ . date('Y-m-d H:i:s') . '  ' . print_r($serverName, true) . ' server is running success' . PHP_EOL);
+                StartLogTimer(__LINE__ .' '. date('Y-m-d H:i:s') . '  ' . print_r($serverName, true) . ' server is running success' . PHP_EOL);
             }
         }
-    });
-
+//    });
+    }
     $serv->on('connect', function ($serv, $fd, $from_id) {
         echo "[#" . posix_getpid() . "]\tClient@[$fd:$from_id]: Connect.\n";
     });
