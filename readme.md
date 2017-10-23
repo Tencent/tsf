@@ -177,7 +177,3 @@ You may contribute in the following ways:
 * [Repost issues and feedback](https://github.com/tencent-php/tsf/issues)
 * Submit fixes, features via Pull Request
 * Write/polish documentation
-
-
-## License
-Apache License Version 2.0 see http://www.apache.org/licenses/LICENSE-2.0.html
