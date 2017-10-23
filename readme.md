@@ -1,11 +1,6 @@
 Tencent Server Framework
 =======================
 
-## 通知
-
-tsf目前github已经可以稳定使用，但还有部分bug，暂时停止更新。
-公司内部已经升级为2.0，不断在完善，之后会根据公司政策对外开源，敬请期待。
-
 ## Overview
 
 Tencent Server Framework is a coroutine and Swoole based server framework for fast server deployment which developed by Tencent engineers.
@@ -182,7 +177,3 @@ You may contribute in the following ways:
 * [Repost issues and feedback](https://github.com/tencent-php/tsf/issues)
 * Submit fixes, features via Pull Request
 * Write/polish documentation
-
-
-## License
-Apache License Version 2.0 see http://www.apache.org/licenses/LICENSE-2.0.html
