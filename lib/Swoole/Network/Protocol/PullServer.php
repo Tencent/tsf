@@ -66,7 +66,7 @@ class PullServer extends Swoole\Network\Protocol implements Swoole\Server\Protoc
     }
 
     //启动定时期,监听IPC通道
-    public function onTimer($serv, $interval)
+    public function onTimer($timer_id, $interval)
     {
         $res = $this->timeJobs[$interval];
         if ($data = $res->recv()) {
@@ -101,7 +101,13 @@ class PullServer extends Swoole\Network\Protocol implements Swoole\Server\Protoc
     {
         if (is_array($this->timeJobs)) {
             foreach ($this->timeJobs as $k => $v) {
-                $serv->addtimer($k);
+                //edit by Terry Gao at 2016-12-27
+                //由于新版Swoole(1.8+)移除了addtimer方法，改用swoole_server->tick方法替代
+                //相应的onTimer回调也稍作调整
+                //$serv->addtimer($k);
+                $serv->tick($k, function ($timer_id, $params){
+                    $this->onTimer($timer_id, $params);
+                }, $k);
             }
         }
     }

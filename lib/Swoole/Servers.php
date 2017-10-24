@@ -2,7 +2,15 @@
 
 namespace Swoole;
 
-abstract class Server implements Server\Driver
+/**
+ * Class Servers
+ * @editor Terry Gao
+ * @date 2016-12-27
+ * 因命名空间类名与文件夹重名，Server类改为Severs
+ *
+ * @package Swoole
+ */
+abstract class Servers implements Server\Driver
 {
     protected $sw;
     protected $processName = 'swooleServ';
@@ -128,7 +136,9 @@ abstract class Server implements Server\Driver
         $this->sw->on('Receive', array($this, 'onReceive'));
         $this->sw->on('Close', array($this, 'onClose'));
         $this->sw->on('WorkerStop', array($this, 'onWorkerStop'));
-        $this->sw->on('timer', array($this, 'onTimer'));
+        //edit by Terry Gao at 2016-12-27
+        //onTimer事件是由已移除的addTimer方法添加的定时器回调的，新版的Swoole已经没有该事件
+        //$this->sw->on('timer', array($this, 'onTimer'));
         if ($this->enableHttp) {
             $this->sw->on('Request', array($this, 'onRequest'));
         }

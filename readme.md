@@ -1,5 +1,12 @@
 Tencent Server Framework
-=======================
+========================
+
+## 2016-12-27 更新内容
+
+- 适配最新的swoole（pecl安装，目前最新版为1.9.2），用swoole_server->tick替代swoole_server->addTimer
+- 修正命名空间重名问题（Server类与Server目录重名）
+- 运行前需要修改conf/testHttpServ.ini中的root和php两个路径，可将路径root指向examples/src目录下的index.php，root为php的安装路径
+- 运行需要使用root用户，请先sudo su，直接使用sudo php bin/swoole.php testHttpServ.ini会报错
 
 ## Overview
 

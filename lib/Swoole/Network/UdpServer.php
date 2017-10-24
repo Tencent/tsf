@@ -4,7 +4,7 @@ namespace Swoole\Network;
  * Class Server
  * @package Swoole\Network
  */
-class UdpServer extends \Swoole\Server
+class UdpServer extends \Swoole\Servers
 {
     protected $sockType = SWOOLE_SOCK_UDP;
 

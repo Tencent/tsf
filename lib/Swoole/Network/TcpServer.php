@@ -4,7 +4,7 @@ namespace Swoole\Network;
  * Class Server
  * @package Swoole\Network
  */
-class TcpServer extends \Swoole\Server implements \Swoole\Server\Driver
+class TcpServer extends \Swoole\Servers implements \Swoole\Server\Driver
 {
     protected $sockType = SWOOLE_SOCK_TCP;
 
